@@ -1,0 +1,1920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <title>Rapid Refresh — Daily Planner</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Planner">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0a0a0f">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@400;500;600;700&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #0a0a0f; --bg2: #12121a; --bg3: #1a1a2e; --gold: #ffd700; --gold2: #ffaa00;
+            --red: #ff1744; --neon-green: #00ff88; --neon-blue: #00d4ff; --neon-purple: #b44dff;
+            --text: #e8e8f0; --text2: #8888aa; --border: #2a2a3e;
+        }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+        /* ===== TOP BAR ===== */
+        .topbar { position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(180deg, var(--bg2), var(--bg)); border-bottom: 1px solid var(--border); padding: 8px 16px; z-index: 100; }
+        .topbar-row { display: flex; justify-content: space-between; align-items: center; }
+        .brand { font-family: 'Orbitron', monospace; font-size: 0.75rem; color: var(--gold); letter-spacing: 2px; }
+        .streak-badge { display: flex; align-items: center; gap: 4px; font-size: 0.8rem; color: var(--gold); }
+        .stats-row { display: flex; gap: 12px; margin-top: 6px; align-items: center; }
+        .stat-pill { background: var(--bg3); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; font-size: 0.7rem; display: flex; align-items: center; gap: 4px; }
+        .xp-bar-wrap { flex: 1; background: var(--bg3); border-radius: 10px; height: 14px; overflow: hidden; border: 1px solid var(--border); position: relative; }
+        .xp-bar-fill { height: 100%; background: linear-gradient(90deg, var(--neon-purple), var(--gold), var(--neon-green)); border-radius: 10px; transition: width 0.8s ease; }
+        .xp-bar-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 700; color: white; text-shadow: 0 0 4px rgba(0,0,0,0.8); }
+        .level-badge { font-family: 'Orbitron', monospace; font-size: 0.7rem; background: linear-gradient(135deg, var(--gold), var(--gold2)); color: #000; padding: 2px 8px; border-radius: 4px; font-weight: 700; }
+
+        /* ===== MAIN ===== */
+        .main { padding: 80px 12px 100px; max-width: 500px; margin: 0 auto; }
+
+        /* ===== SCORE DISPLAY ===== */
+        .score-display { text-align: center; margin-bottom: 16px; }
+        .score-number { font-family: 'Orbitron', monospace; font-size: 3rem; font-weight: 900; background: linear-gradient(135deg, var(--gold), var(--gold2), var(--neon-green)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: none; filter: drop-shadow(0 0 20px rgba(255,215,0,0.3)); transition: transform 0.3s; }
+        .score-number.bump { transform: scale(1.15); }
+        .score-label { font-size: 0.7rem; color: var(--text2); letter-spacing: 2px; text-transform: uppercase; }
+        .daily-target { font-size: 0.75rem; color: var(--text2); margin-top: 4px; }
+        .daily-target span { color: var(--gold); font-weight: 600; }
+
+        /* ===== BONUS BANNER ===== */
+        .bonus-banner { display: none; background: linear-gradient(135deg, #ff1744, #ff6d00, #ffd700); border-radius: 10px; padding: 12px; text-align: center; margin-bottom: 12px; animation: pulse 1s infinite; }
+        .bonus-banner.active { display: block; }
+        .bonus-banner h3 { font-family: 'Orbitron', monospace; font-size: 1rem; color: #000; }
+        .bonus-banner p { font-size: 0.8rem; color: #000; font-weight: 600; }
+        .bonus-timer { font-family: 'Orbitron', monospace; font-size: 1.5rem; color: #000; }
+
+        /* ===== COMBO ===== */
+        .combo-display { display: none; text-align: center; margin-bottom: 8px; }
+        .combo-display.active { display: block; }
+        .combo-text { font-family: 'Orbitron', monospace; font-size: 1rem; color: var(--neon-green); animation: glow 0.5s ease infinite alternate; }
+
+        /* ===== INPUT ===== */
+        .input-area { position: fixed; bottom: 0; left: 0; right: 0; background: linear-gradient(0deg, var(--bg2), var(--bg)); border-top: 1px solid var(--border); padding: 10px 12px; z-index: 100; }
+        .input-wrap { display: flex; gap: 8px; max-width: 500px; margin: 0 auto; }
+        .input-wrap input { flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: 25px; padding: 12px 18px; color: var(--text); font-size: 0.9rem; outline: none; }
+        .input-wrap input:focus { border-color: var(--gold); box-shadow: 0 0 10px rgba(255,215,0,0.2); }
+        .input-wrap input::placeholder { color: var(--text2); }
+        .send-btn { width: 48px; height: 48px; border-radius: 50%; border: none; background: linear-gradient(135deg, var(--gold), var(--gold2)); color: #000; font-size: 1.2rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s, box-shadow 0.2s; }
+        .send-btn:active { transform: scale(0.9); }
+        .send-btn:hover { box-shadow: 0 0 15px rgba(255,215,0,0.4); }
+
+        /* ===== TABS ===== */
+        .tabs { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .tab { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: var(--bg3); color: var(--text2); font-size: 0.75rem; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
+        .tab.active { background: var(--gold); color: #000; border-color: var(--gold); font-weight: 600; }
+        .tab .count { margin-left: 4px; opacity: 0.7; }
+
+        /* ===== TASK CARDS ===== */
+        .task-list { display: flex; flex-direction: column; gap: 8px; }
+        .task-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; display: flex; align-items: flex-start; gap: 10px; transition: all 0.3s; position: relative; overflow: hidden; }
+        .task-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+        .task-card[data-cat="quotes"]::before { background: var(--gold); }
+        .task-card[data-cat="site-visits"]::before { background: var(--neon-green); }
+        .task-card[data-cat="admin"]::before { background: var(--neon-blue); }
+        .task-card[data-cat="employment"]::before { background: var(--neon-purple); }
+        .task-card[data-cat="habits"]::before { background: #ff6d00; }
+        .task-card[data-cat="other"]::before { background: var(--text2); }
+        .task-card.completing { animation: taskWin 0.6s ease forwards; }
+        .task-check { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--border); background: var(--bg3); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; margin-top: 2px; position: relative; overflow: hidden; }
+        .task-check::after { content: ''; position: absolute; inset: 2px; border-radius: 50%; background: conic-gradient(var(--gold) var(--fill, 0%), transparent var(--fill, 0%)); opacity: 0.6; transition: none; }
+        .task-check:hover { border-color: var(--gold); box-shadow: 0 0 10px rgba(255,215,0,0.3); }
+        .task-check.filling { border-color: var(--gold); box-shadow: 0 0 15px rgba(255,215,0,0.4); }
+        .undo-bar { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%); background: var(--bg3); border: 1px solid var(--gold); border-radius: 25px; padding: 8px 20px; display: flex; align-items: center; gap: 10px; z-index: 150; font-size: 0.8rem; animation: slideUp 0.3s ease; }
+        .undo-bar button { background: var(--gold); color: #000; border: none; border-radius: 15px; padding: 4px 14px; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
+        .task-info { flex: 1; }
+        .task-title { font-size: 0.88rem; font-weight: 500; }
+        .task-meta { display: flex; gap: 8px; margin-top: 4px; font-size: 0.7rem; color: var(--text2); align-items: center; }
+        .task-cat { padding: 1px 8px; border-radius: 10px; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .task-cat[data-cat="quotes"] { background: rgba(255,215,0,0.15); color: var(--gold); }
+        .task-cat[data-cat="site-visits"] { background: rgba(0,255,136,0.15); color: var(--neon-green); }
+        .task-cat[data-cat="admin"] { background: rgba(0,212,255,0.15); color: var(--neon-blue); }
+        .task-cat[data-cat="employment"] { background: rgba(180,77,255,0.15); color: var(--neon-purple); }
+        .task-cat[data-cat="habits"] { background: rgba(255,109,0,0.15); color: #ff6d00; }
+        .task-cat[data-cat="other"] { background: rgba(136,136,170,0.15); color: var(--text2); }
+        .task-points { font-family: 'Orbitron', monospace; font-size: 0.75rem; color: var(--gold); font-weight: 700; flex-shrink: 0; }
+        .task-delete { background: none; border: none; color: var(--text2); cursor: pointer; font-size: 0.9rem; padding: 4px; opacity: 0.5; }
+        .task-delete:hover { opacity: 1; color: var(--red); }
+        .task-card.done { opacity: 0.3; }
+        .task-card.done .task-title { text-decoration: line-through; }
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--text2); }
+        .empty-state .emoji { font-size: 2rem; margin-bottom: 8px; }
+
+        /* ===== PAYOUT OVERLAY ===== */
+        .payout-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 500; align-items: center; justify-content: center; flex-direction: column; }
+        .payout-overlay.active { display: flex; }
+        .payout-title { font-family: 'Orbitron', monospace; font-size: 1.2rem; color: var(--gold); letter-spacing: 3px; margin-bottom: 10px; }
+        .payout-amount { font-family: 'Orbitron', monospace; font-size: 4rem; font-weight: 900; color: var(--gold); text-shadow: 0 0 30px rgba(255,215,0,0.5); }
+        .payout-multiplier { font-family: 'Orbitron', monospace; font-size: 1.5rem; color: var(--neon-green); margin-top: 5px; }
+        .payout-sub { font-size: 0.8rem; color: var(--text2); margin-top: 10px; }
+
+        /* ===== CASHOUT OVERLAY ===== */
+        .cashout-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 600; align-items: center; justify-content: center; flex-direction: column; padding: 20px; }
+        .cashout-overlay.active { display: flex; }
+        .cashout-card { background: var(--bg2); border: 2px solid var(--gold); border-radius: 16px; padding: 24px; text-align: center; max-width: 380px; width: 100%; }
+        .cashout-title { font-family: 'Orbitron', monospace; font-size: 1.3rem; color: var(--gold); margin-bottom: 16px; }
+        .cashout-score { font-family: 'Orbitron', monospace; font-size: 3.5rem; font-weight: 900; color: var(--gold); text-shadow: 0 0 30px rgba(255,215,0,0.4); }
+        .cashout-stats { margin-top: 16px; }
+        .cashout-stat { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+        .cashout-stat .label { color: var(--text2); }
+        .cashout-stat .value { font-weight: 600; }
+        .cashout-btn { margin-top: 20px; padding: 14px 30px; border-radius: 30px; border: none; background: linear-gradient(135deg, var(--gold), var(--gold2)); color: #000; font-family: 'Orbitron', monospace; font-size: 0.9rem; font-weight: 700; cursor: pointer; }
+
+        /* ===== HISTORY ===== */
+        .history-section { margin-top: 20px; }
+        .history-bar { display: flex; align-items: flex-end; gap: 3px; height: 100px; margin-top: 8px; }
+        .history-day { flex: 1; background: var(--bg3); border-radius: 4px 4px 0 0; position: relative; min-width: 20px; transition: height 0.3s; cursor: pointer; }
+        .history-day.today { background: var(--gold); }
+        .history-day.jackpot { background: linear-gradient(180deg, var(--gold), var(--neon-green)); }
+        .history-day .day-label { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); font-size: 0.55rem; color: var(--text2); }
+        .history-day .day-score { position: absolute; top: -16px; left: 50%; transform: translateX(-50%); font-size: 0.55rem; color: var(--text2); font-family: 'Orbitron', monospace; }
+        .history-target-line { position: absolute; left: 0; right: 0; border-top: 1px dashed var(--gold); }
+        .history-container { position: relative; height: 120px; margin-top: 8px; }
+
+        /* ===== NAV ===== */
+        .nav-row { display: flex; gap: 6px; margin-bottom: 12px; }
+        .nav-btn { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg2); color: var(--text2); font-size: 0.75rem; font-weight: 600; cursor: pointer; text-align: center; transition: all 0.2s; }
+        .nav-btn.active { background: var(--bg3); color: var(--gold); border-color: var(--gold); }
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* ===== BET OPTIONS ===== */
+        .bet-option { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: center; cursor: pointer; transition: all 0.2s; }
+        .bet-option:hover { border-color: var(--gold); box-shadow: 0 0 15px rgba(255,215,0,0.2); transform: scale(1.02); }
+        .bet-option:active { transform: scale(0.97); }
+        .bet-option .bet-time { font-family: 'Orbitron', monospace; font-size: 0.7rem; color: var(--text); font-weight: 700; margin-bottom: 4px; }
+        .bet-option .bet-odds { font-size: 0.7rem; color: var(--text2); }
+        .bet-option .bet-risk { font-size: 0.65rem; color: var(--text2); margin-top: 2px; }
+
+        /* ===== PRIORITY ITEMS ===== */
+        .priority-item { display: flex; align-items: center; gap: 8px; background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 6px; transition: all 0.2s; }
+        .priority-item.needle { border-color: var(--gold); background: rgba(255,215,0,0.05); }
+        .priority-item .p-rank { font-family: 'Orbitron', monospace; font-size: 0.75rem; color: var(--gold); width: 22px; text-align: center; flex-shrink: 0; }
+        .priority-item.needle .p-rank { color: var(--gold); font-size: 0.9rem; }
+        .priority-item .p-text { flex: 1; font-size: 0.85rem; }
+        .priority-item .p-cat { font-size: 0.6rem; padding: 1px 6px; border-radius: 8px; background: rgba(255,255,255,0.05); color: var(--text2); }
+        .priority-item .p-actions { display: flex; gap: 2px; }
+        .priority-item .p-btn { background: none; border: none; color: var(--text2); cursor: pointer; font-size: 0.85rem; padding: 2px 6px; border-radius: 4px; }
+        .priority-item .p-btn:hover { color: var(--text); background: var(--bg); }
+        .priority-item .p-pts { font-family: 'Orbitron', monospace; font-size: 0.7rem; color: var(--gold); flex-shrink: 0; }
+        .pull-chip { padding: 4px 10px; border-radius: 15px; border: 1px solid var(--border); background: var(--bg3); color: var(--text2); font-size: 0.68rem; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+        .pull-chip:hover { border-color: var(--gold); color: var(--gold); }
+        .pull-chip.added { opacity: 0.3; pointer-events: none; }
+
+        /* ===== PARTICLES ===== */
+        .particle { position: fixed; pointer-events: none; z-index: 1000; font-size: 1.5rem; animation: particleFly 1.5s ease-out forwards; }
+
+        /* ===== CONFETTI ===== */
+        .confetti { position: fixed; width: 8px; height: 8px; z-index: 999; pointer-events: none; animation: confettiFall 2s ease-out forwards; }
+
+        /* ===== ANIMATIONS ===== */
+        /* ===== MOBILE OPTIMISATION ===== */
+        @media (max-width: 500px) {
+            .topbar { padding: 6px 12px; padding-top: env(safe-area-inset-top, 6px); }
+            .main { padding: 78px 10px 90px; }
+            .score-number { font-size: 2.5rem; }
+            .nav-row { gap: 4px; }
+            .nav-btn { padding: 8px 6px; font-size: 0.7rem; }
+            .tabs { gap: 4px; padding-bottom: 4px; }
+            .tab { padding: 6px 10px; font-size: 0.7rem; }
+            .task-card { padding: 10px 10px 10px 14px; gap: 8px; }
+            .task-check { width: 36px; height: 36px; min-width: 36px; }
+            .task-title { font-size: 0.82rem; }
+            .task-meta { gap: 5px; flex-wrap: wrap; }
+            .task-points { font-size: 0.7rem; }
+            .task-delete { padding: 6px; font-size: 1rem; }
+            .input-area { padding: 8px 10px; padding-bottom: env(safe-area-inset-bottom, 8px); }
+            .input-wrap input { padding: 10px 14px; font-size: 0.85rem; }
+            .send-btn { width: 44px; height: 44px; font-size: 1.1rem; }
+            .payout-amount { font-size: 3rem; }
+            .cashout-card { padding: 20px 16px; }
+            .cashout-score { font-size: 2.8rem; }
+            .stat-pill { padding: 2px 8px; font-size: 0.65rem; }
+            .level-badge { font-size: 0.6rem; padding: 2px 6px; }
+            .xp-bar-wrap { height: 12px; }
+            .xp-bar-text { font-size: 0.55rem; }
+            .streak-badge { font-size: 0.75rem; }
+            .bet-option { padding: 10px 8px; }
+            .bet-option .bet-time { font-size: 0.65rem; }
+            .priority-item { padding: 8px 10px; }
+            .priority-item .p-text { font-size: 0.8rem; }
+            .undo-bar { bottom: 65px; padding: 6px 16px; font-size: 0.75rem; }
+            #betTimer { top: 72px; padding: 4px 16px; }
+            #betTimerClock { font-size: 1.1rem; }
+        }
+
+        /* Extra small phones */
+        @media (max-width: 360px) {
+            .score-number { font-size: 2rem; }
+            .nav-btn { font-size: 0.65rem; padding: 6px 4px; }
+            .task-title { font-size: 0.78rem; }
+            .brand { font-size: 0.65rem; letter-spacing: 1px; }
+        }
+
+        /* Smooth scrolling */
+        html { scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
+
+        /* Prevent rubber-band overscroll */
+        body { overscroll-behavior: none; }
+
+        /* Better tap targets */
+        @media (pointer: coarse) {
+            .task-check { width: 40px; height: 40px; min-width: 40px; }
+            .task-delete { min-width: 36px; min-height: 36px; display: flex; align-items: center; justify-content: center; }
+            .tab { min-height: 36px; display: flex; align-items: center; }
+            .nav-btn { min-height: 40px; display: flex; align-items: center; justify-content: center; }
+            .pull-chip { min-height: 32px; display: flex; align-items: center; }
+        }
+
+        @keyframes lights { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+        @keyframes reelSpin { 0% { transform: translateY(0); } 25% { transform: translateY(-30px); } 50% { transform: translateY(0); } 75% { transform: translateY(30px); } 100% { transform: translateY(0); } }
+        @keyframes spinBtnPulse { 0%, 100% { box-shadow: 0 4px 15px rgba(255,23,68,0.4); } 50% { box-shadow: 0 4px 25px rgba(255,23,68,0.7), 0 0 40px rgba(255,23,68,0.3); } }
+        #spinBtn:hover { transform: scale(1.05); box-shadow: 0 4px 25px rgba(255,23,68,0.6); }
+        #spinBtn:active { transform: scale(0.95); }
+        #spinBtn { animation: spinBtnPulse 2s ease infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.85; } }
+        @keyframes glow { from { text-shadow: 0 0 5px var(--neon-green); } to { text-shadow: 0 0 20px var(--neon-green), 0 0 40px var(--neon-green); } }
+        @keyframes taskWin { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); border-color: var(--gold); box-shadow: 0 0 20px rgba(255,215,0,0.3); } 100% { transform: scale(0.95); opacity: 0; } }
+        @keyframes particleFly { 0% { opacity: 1; transform: translate(0,0) scale(1); } 100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0.3); } }
+        @keyframes confettiFall { 0% { opacity: 1; transform: translate(0, 0) rotate(0deg); } 100% { opacity: 0; transform: translate(var(--tx), 600px) rotate(720deg); } }
+        @keyframes jackpotFlash { 0%, 100% { background: var(--bg); } 25% { background: rgba(255,215,0,0.1); } 50% { background: rgba(255,23,68,0.1); } 75% { background: rgba(0,255,136,0.1); } }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes countUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+    <div class="topbar-row">
+        <div style="display:flex;align-items:center;gap:8px">
+            <div class="brand">RAPID REFRESH</div>
+            <div id="profileBadge" onclick="switchProfile()" style="padding:2px 8px;border-radius:10px;font-size:0.65rem;font-weight:600;cursor:pointer;border:1px solid var(--border)"></div>
+        </div>
+        <div class="streak-badge">🔥 <span id="streakCount">0</span> day streak</div>
+    </div>
+    <div class="stats-row">
+        <div class="level-badge" id="levelBadge">LVL 1</div>
+        <div class="xp-bar-wrap">
+            <div class="xp-bar-fill" id="xpBar" style="width:0%"></div>
+            <div class="xp-bar-text" id="xpText">0 / 100 XP</div>
+        </div>
+        <div class="stat-pill">🪙 <span id="totalCoins">0</span></div>
+    </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+    <!-- Nav -->
+    <div class="nav-row">
+        <div class="nav-btn active" onclick="showPage('tasks',this)">Today</div>
+        <div class="nav-btn" onclick="showPage('tomorrow',this)">Tomorrow</div>
+        <div class="nav-btn" onclick="showPage('history',this)">History</div>
+        <div class="nav-btn" onclick="cashOut()">Cash Out</div>
+    </div>
+
+    <!-- TASKS PAGE -->
+    <div class="page active" id="tasksPage">
+        <!-- SLOT MACHINE -->
+        <div id="slotMachine" style="background:linear-gradient(180deg,#1a0a00,#2a1500,#1a0a00);border:2px solid var(--gold);border-radius:16px;padding:16px;margin-bottom:16px;text-align:center;position:relative;overflow:hidden;box-shadow:0 0 30px rgba(255,215,0,0.15),inset 0 0 30px rgba(0,0,0,0.5)">
+            <!-- Lights -->
+            <div style="position:absolute;top:-1px;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--gold),var(--red),var(--gold),var(--neon-green),var(--gold),var(--red),var(--gold));animation:lights 2s linear infinite;background-size:200%"></div>
+            <div style="position:absolute;bottom:-1px;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--red),var(--gold),var(--neon-green),var(--gold),var(--red),var(--gold),var(--neon-green));animation:lights 2s linear infinite reverse;background-size:200%"></div>
+
+            <div style="font-family:'Orbitron',monospace;font-size:0.65rem;color:var(--gold);letter-spacing:3px;margin-bottom:8px">WHAT'S NEXT?</div>
+
+            <!-- Reel window -->
+            <div style="background:#000;border-radius:10px;border:2px solid #333;padding:2px;margin:0 auto;max-width:320px;overflow:hidden;position:relative">
+                <div id="reelWindow" style="height:60px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden">
+                    <div id="reelStrip" style="position:absolute;width:100%;transition:transform 0.1s;padding:0 12px">
+                        <div id="reelText" style="font-size:0.85rem;color:var(--gold);font-weight:600;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Press SPIN to pick your next task</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Points preview -->
+            <div id="slotPoints" style="font-family:'Orbitron',monospace;font-size:1.2rem;color:var(--neon-green);margin-top:6px;min-height:24px"></div>
+
+            <!-- Spin button -->
+            <button onclick="spinSlot()" id="spinBtn" style="margin-top:10px;padding:12px 40px;border-radius:30px;border:2px solid var(--gold);background:linear-gradient(180deg,#ff1744,#cc0000,#ff1744);color:#fff;font-family:'Orbitron',monospace;font-size:1rem;font-weight:900;letter-spacing:2px;cursor:pointer;box-shadow:0 4px 15px rgba(255,23,68,0.4),inset 0 1px 0 rgba(255,255,255,0.2);transition:transform 0.1s,box-shadow 0.1s;text-shadow:0 1px 2px rgba(0,0,0,0.5)">
+                SPIN
+            </button>
+        </div>
+
+        <!-- Score -->
+        <div class="score-display">
+            <div class="score-label">Today's Score</div>
+            <div class="score-number" id="todayScore">0</div>
+            <div class="daily-target">Target: <span id="targetDisplay">200</span> pts to beat the house</div>
+        </div>
+
+        <!-- Bonus Banner -->
+        <div class="bonus-banner" id="bonusBanner">
+            <h3>🎰 BONUS ROUND 🎰</h3>
+            <p>Complete next task for <span id="bonusMultiplier">3</span>x points!</p>
+            <div class="bonus-timer" id="bonusTimer">30:00</div>
+        </div>
+
+        <!-- Combo -->
+        <div class="combo-display" id="comboDisplay">
+            <div class="combo-text" id="comboText">🔥 COMBO x2</div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <div class="tab active" onclick="filterTasks('all',this)">All <span class="count" id="countAll">0</span></div>
+            <div class="tab" onclick="filterTasks('quotes',this)">Quotes <span class="count" id="countQuotes">0</span></div>
+            <div class="tab" onclick="filterTasks('site-visits',this)">Site Visits <span class="count" id="countSite">0</span></div>
+            <div class="tab" onclick="filterTasks('admin',this)">Admin <span class="count" id="countAdmin">0</span></div>
+            <div class="tab" onclick="filterTasks('employment',this)">Employment <span class="count" id="countEmployment">0</span></div>
+            <div class="tab" onclick="filterTasks('habits',this)">Habits <span class="count" id="countHabits">0</span></div>
+            <div class="tab" onclick="filterTasks('other',this)">Other <span class="count" id="countOther">0</span></div>
+        </div>
+
+        <!-- Task List -->
+        <div class="task-list" id="taskList"></div>
+    </div>
+
+    <!-- TOMORROW PAGE -->
+    <div class="page" id="tomorrowPage">
+        <div style="text-align:center;margin-bottom:16px">
+            <div style="font-family:'Orbitron',monospace;font-size:0.8rem;color:var(--gold);letter-spacing:2px">PLAN TOMORROW</div>
+            <div style="font-size:0.75rem;color:var(--text2);margin-top:4px" id="tomorrowDate"></div>
+        </div>
+
+        <!-- The Big Question -->
+        <div style="background:linear-gradient(135deg,var(--bg3),var(--bg2));border:1px solid var(--gold);border-radius:12px;padding:16px;margin-bottom:16px">
+            <div style="font-size:0.7rem;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">The One Thing</div>
+            <div style="font-size:0.85rem;color:var(--text);margin-bottom:10px">What is the most important thing to move the needle forward tomorrow?</div>
+            <input type="text" id="needleMover" placeholder="e.g. Close Ger's $19k deck" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--gold);font-size:1rem;font-weight:600;outline:none" oninput="saveTomorrow()">
+            <div style="font-size:0.65rem;color:var(--text2);margin-top:6px">This goes to the top of your list. Everything else supports this.</div>
+        </div>
+
+        <!-- Priority List -->
+        <div style="margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                <div style="font-family:'Orbitron',monospace;font-size:0.8rem;color:var(--text)">Priority List</div>
+                <div style="font-size:0.65rem;color:var(--text2)">Drag to reorder (tap arrows)</div>
+            </div>
+
+            <div id="priorityList"></div>
+
+            <!-- Quick add -->
+            <div style="display:flex;gap:6px;margin-top:10px">
+                <input type="text" id="priorityInput" placeholder="Add task for tomorrow..." style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:25px;padding:10px 16px;color:var(--text);font-size:0.85rem;outline:none" onkeydown="if(event.key==='Enter')addPriority()">
+                <button onclick="addPriority()" style="width:42px;height:42px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;font-size:1.1rem;font-weight:900;cursor:pointer">+</button>
+            </div>
+
+            <!-- Quick add from existing tasks -->
+            <div style="margin-top:10px">
+                <div style="font-size:0.7rem;color:var(--text2);margin-bottom:6px">Or pull from your task list:</div>
+                <div id="pullFromTasks" style="display:flex;flex-wrap:wrap;gap:4px;max-height:120px;overflow-y:auto"></div>
+            </div>
+        </div>
+
+        <!-- Tomorrow's forecast -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-top:16px">
+            <div style="font-size:0.7rem;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Tomorrow's Forecast</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center">
+                <div>
+                    <div style="font-size:0.6rem;color:var(--text2)">Tasks</div>
+                    <div style="font-family:'Orbitron',monospace;font-size:1.2rem;color:var(--text)" id="tmrwTaskCount">0</div>
+                </div>
+                <div>
+                    <div style="font-size:0.6rem;color:var(--text2)">Potential pts</div>
+                    <div style="font-family:'Orbitron',monospace;font-size:1.2rem;color:var(--gold)" id="tmrwPoints">0</div>
+                </div>
+                <div>
+                    <div style="font-size:0.6rem;color:var(--text2)">vs Target</div>
+                    <div style="font-family:'Orbitron',monospace;font-size:1.2rem" id="tmrwVsTarget">-</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lock in button -->
+        <button onclick="lockInTomorrow()" style="width:100%;margin-top:16px;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;font-family:'Orbitron',monospace;font-size:0.9rem;font-weight:700;cursor:pointer;transition:transform 0.2s">LOCK IN TOMORROW'S PLAN</button>
+    </div>
+
+    <!-- HISTORY PAGE -->
+    <div class="page" id="historyPage">
+        <h2 style="font-family:'Orbitron',monospace;font-size:1rem;color:var(--gold);margin-bottom:4px">Daily Scorecard</h2>
+        <p style="font-size:0.75rem;color:var(--text2);margin-bottom:12px">Gold line = daily target. Green = jackpot (beat the house).</p>
+        <div class="history-container">
+            <div class="history-bar" id="historyBar"></div>
+        </div>
+        <div id="historyStats" style="margin-top:24px"></div>
+    </div>
+</div>
+
+<!-- INPUT -->
+<div class="input-area">
+    <div class="input-wrap">
+        <input type="text" id="taskInput" placeholder="What needs doing? e.g. 'quote for Smith driveway'" autocomplete="off">
+        <button class="send-btn" onclick="addTask()">+</button>
+    </div>
+</div>
+
+<!-- BET PANEL -->
+<div id="betPanel" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:300;align-items:flex-end;justify-content:center;padding:0 10px">
+    <div style="background:linear-gradient(180deg,#1a0a00,#0a0a0f);border:2px solid var(--gold);border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:500px;position:relative">
+        <div style="position:absolute;top:-1px;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--gold),var(--red),var(--gold),var(--neon-green),var(--gold));animation:lights 2s linear infinite;background-size:200%;border-radius:16px 16px 0 0"></div>
+        <div style="text-align:center;margin-bottom:12px">
+            <div style="font-family:'Orbitron',monospace;font-size:0.7rem;color:var(--gold);letter-spacing:3px">PLACE YOUR BET</div>
+            <div style="font-size:0.8rem;color:var(--text);margin-top:6px" id="betTaskName"></div>
+            <div style="font-size:0.75rem;color:var(--text2);margin-top:2px">Base points: <span id="betBasePoints" style="color:var(--gold)"></span></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px" id="betOptions">
+            <div class="bet-option" onclick="placeBet(15, 3, 0.5)" data-time="15">
+                <div class="bet-time">⚡ UNDER 15 MIN</div>
+                <div class="bet-odds">Win: <span style="color:var(--neon-green)">3x points</span></div>
+                <div class="bet-risk">Lose: <span style="color:var(--red)">-50%</span></div>
+            </div>
+            <div class="bet-option" onclick="placeBet(30, 2, 0.25)" data-time="30">
+                <div class="bet-time">🔥 UNDER 30 MIN</div>
+                <div class="bet-odds">Win: <span style="color:var(--neon-green)">2x points</span></div>
+                <div class="bet-risk">Lose: <span style="color:var(--red)">-25%</span></div>
+            </div>
+            <div class="bet-option" onclick="placeBet(60, 1.5, 0.1)" data-time="60">
+                <div class="bet-time">💪 UNDER 1 HOUR</div>
+                <div class="bet-odds">Win: <span style="color:var(--neon-green)">1.5x points</span></div>
+                <div class="bet-risk">Lose: <span style="color:var(--red)">-10%</span></div>
+            </div>
+            <div class="bet-option" onclick="placeBet(120, 1.2, 0)" data-time="120">
+                <div class="bet-time">🧘 UNDER 2 HOURS</div>
+                <div class="bet-odds">Win: <span style="color:var(--neon-green)">1.2x points</span></div>
+                <div class="bet-risk">Lose: <span style="color:var(--text2)">nothing</span></div>
+            </div>
+        </div>
+
+        <button onclick="closeBetPanel()" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:0.8rem;cursor:pointer">No bet — just do it</button>
+    </div>
+</div>
+
+<!-- ACTIVE BET TIMER -->
+<div id="betTimer" style="display:none;position:fixed;top:75px;left:50%;transform:translateX(-50%);z-index:200;background:linear-gradient(135deg,#1a0a00,#2a1500);border:2px solid var(--gold);border-radius:30px;padding:6px 20px;text-align:center;box-shadow:0 0 20px rgba(255,215,0,0.2)">
+    <div style="font-size:0.6rem;color:var(--gold);letter-spacing:1px" id="betTimerLabel">BET ACTIVE</div>
+    <div style="font-family:'Orbitron',monospace;font-size:1.3rem;font-weight:900;color:var(--text)" id="betTimerClock">00:00</div>
+    <div style="font-size:0.6rem;color:var(--text2)" id="betTimerTask"></div>
+    <button onclick="cancelBet()" style="margin-top:4px;background:none;border:1px solid var(--red);border-radius:12px;padding:2px 12px;font-size:0.6rem;color:var(--red);cursor:pointer">Cancel Bet</button>
+</div>
+
+<!-- PAYOUT OVERLAY -->
+<div class="payout-overlay" id="payoutOverlay">
+    <div class="payout-title">PAYOUT</div>
+    <div class="payout-amount" id="payoutAmount">+0</div>
+    <div class="payout-multiplier" id="payoutMulti"></div>
+    <div class="payout-sub" id="payoutSub"></div>
+</div>
+
+<!-- CASHOUT OVERLAY -->
+<div class="cashout-overlay" id="cashoutOverlay">
+    <div class="cashout-card">
+        <div class="cashout-title">DAILY CASH OUT</div>
+        <div class="cashout-score" id="cashoutScore">0</div>
+        <div style="font-size:0.8rem;color:var(--text2);margin-top:4px" id="cashoutVerdict"></div>
+        <div class="cashout-stats" id="cashoutStats"></div>
+        <button class="cashout-btn" onclick="closeCashout()">COLLECT</button>
+    </div>
+</div>
+
+<script>
+// ============================================================
+// PROFILES
+// ============================================================
+const PROFILES = {
+    harvey: { name: 'Roy', emoji: '🦁', color: '#ffd700', storeKey: 'planner_state' },
+    jess: { name: 'Jess', emoji: '🐨', color: '#ff69b4', storeKey: 'planner_state_jess' }
+};
+
+let currentProfile = localStorage.getItem('planner_profile') || 'harvey';
+
+function switchProfile() {
+    // Save current state
+    save();
+    // Toggle
+    currentProfile = currentProfile === 'harvey' ? 'jess' : 'harvey';
+    localStorage.setItem('planner_profile', currentProfile);
+    // Load new state
+    const profile = PROFILES[currentProfile];
+    state = JSON.parse(localStorage.getItem(profile.storeKey) || 'null') || {
+        tasks: [], totalXP: 0, todayScore: 0, todayTasks: 0, todayDate: todayStr(),
+        streak: 0, lastActiveDate: null, combo: 0, comboTimer: null,
+        bonusActive: false, bonusMultiplier: 1, bonusEnd: null,
+        history: {}, completedToday: 0
+    };
+    tomorrow = JSON.parse(localStorage.getItem('planner_tomorrow_' + currentProfile) || 'null') || {
+        date: '', needleMover: '', priorities: []
+    };
+    updateProfileBadge();
+    checkDay();
+    render();
+}
+
+function updateProfileBadge() {
+    const profile = PROFILES[currentProfile];
+    const badge = document.getElementById('profileBadge');
+    badge.textContent = profile.emoji + ' ' + profile.name;
+    badge.style.background = profile.color + '22';
+    badge.style.color = profile.color;
+    badge.style.borderColor = profile.color + '44';
+}
+
+function save() {
+    const profile = PROFILES[currentProfile];
+    localStorage.setItem(profile.storeKey, JSON.stringify(state));
+}
+
+// ============================================================
+// CONFIG
+// ============================================================
+const DAILY_TARGET = 200;
+const CATEGORIES = {
+    'quotes': { label: 'Quotes', points: 50, icon: '💰', color: '#ffd700' },
+    'site-visits': { label: 'Site Visits', points: 40, icon: '📍', color: '#00ff88' },
+    'employment': { label: 'Employment', points: 30, icon: '👤', color: '#b44dff' },
+    'admin': { label: 'Admin', points: 20, icon: '📋', color: '#00d4ff' },
+    'habits': { label: 'Habits', points: 10, icon: '⚡', color: '#ff6d00' },
+    'other': { label: 'Other', points: 15, icon: '📌', color: '#8888aa' },
+};
+
+// Daily habits — auto-added every morning, day-specific where needed
+function getDailyHabits() {
+    const dayNum = new Date().getDay(); // 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat
+    const dayName = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dayNum];
+    const isBoxingDay = [1,3,4,5].includes(dayNum); // Mon Wed Thu Fri
+    const isGymDay = [1,3,4].includes(dayNum); // Mon Wed Thu
+
+    const habits = [
+        // === WAKE UP ===
+        { text: '⏰ Out of bed before 5:30am', points: 10 },
+        { text: '🪥 Brush teeth (morning)', points: 5 },
+        { text: '💧 Creatine 5g + big glass of water', points: 5 },
+
+        // === 5:30 AM — BOXING (Mon/Wed/Thu) ===
+        ...(isBoxingDay ? [{ text: '🥊 5:30am — Boxing session', points: 30 }] : []),
+
+        // === MORNING ===
+        { text: '🥣 Eat breakfast', points: 10 },
+        { text: '🥤 Protein shake — 60g protein', points: 10 },
+
+        // === GYM (Mon/Wed/Thu — 7:30am or 12pm) ===
+        ...(isGymDay ? [{ text: '🏋️ Gym session (' + dayName + ')', points: 25 }] : []),
+
+        // === WORK DAY ===
+        { text: '💧 Drink 2L+ water throughout day', points: 10 },
+        { text: '🥗 Eat lunch', points: 10 },
+
+        // === AFTERNOON/EVENING ===
+        { text: '🥘 Eat dinner', points: 10 },
+        { text: '🧘 Yoga — 15 min minimum', points: 20 },
+        { text: '📖 Read — 15 min minimum', points: 15 },
+
+        // === WIND DOWN ===
+        { text: '📝 Plan tomorrow (Tomorrow tab)', points: 15 },
+        { text: '🪥 Brush teeth (evening)', points: 5 },
+        { text: '📵 Phone down by 10pm', points: 10 },
+        { text: '😴 10:30pm — Lights out', points: 10 },
+    ];
+
+    return habits;
+}
+
+const DAILY_HABITS = getDailyHabits();
+
+const URGENCY = { overdue: 2.0, today: 1.5, week: 1.2, none: 1.0 };
+
+// Daily levels — reset to 1 every morning, climb through the day
+const LEVELS = [
+    { level: 1, xp: 0, title: 'Waking Up' },
+    { level: 2, xp: 30, title: 'Warming Up' },
+    { level: 3, xp: 75, title: 'Getting Going' },
+    { level: 4, xp: 130, title: 'In The Zone' },
+    { level: 5, xp: 200, title: 'On Fire' },
+    { level: 6, xp: 300, title: 'Machine Mode' },
+    { level: 7, xp: 420, title: 'Unstoppable' },
+    { level: 8, xp: 560, title: 'Beast' },
+    { level: 9, xp: 750, title: 'Absolute Unit' },
+    { level: 10, xp: 1000, title: 'Legend' },
+];
+
+const KEYWORDS = {
+    'quotes': ['quote','pricing','price','estimate','measure','scope','proposal','cost'],
+    'site-visits': ['site','visit','check','inspect','look at','go to','meet','onsite','on-site','measure up','drive to','pop over'],
+    'employment': ['hire','interview','apprentice','staff','employee','contract','payroll','wage','ird','kiwisaver','leave','sick','hr','training','onboard','brighthr'],
+    'admin': ['invoice','email','call','ring','phone','xero','gst','tax','pay','bill','receipt','paperwork','file','order','book','schedule','send','reply','follow up','chase']
+};
+
+// ============================================================
+// STATE
+// ============================================================
+let state = JSON.parse(localStorage.getItem('planner_state') || 'null') || {
+    tasks: [], totalXP: 0, todayScore: 0, todayTasks: 0, todayDate: todayStr(),
+    streak: 0, lastActiveDate: null, combo: 0, comboTimer: null,
+    bonusActive: false, bonusMultiplier: 1, bonusEnd: null,
+    history: {}, completedToday: 0
+};
+let currentFilter = 'all';
+
+function todayStr() { const d = new Date(); return d.toISOString().split('T')[0]; }
+// save() is defined in PROFILES section above
+
+// Reset day if needed
+function checkDay() {
+    const today = todayStr();
+    if (state.todayDate !== today) {
+        // Save yesterday with full details
+        if (state.todayDate) {
+            const lvl = getLevel();
+            state.history[state.todayDate] = {
+                score: state.todayScore,
+                tasks: state.todayTasks,
+                completed: state.completedToday,
+                level: lvl.level,
+                title: lvl.title,
+                beatHouse: state.todayScore >= DAILY_TARGET
+            };
+        }
+        // Streak
+        const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+        if (state.lastActiveDate === yesterday) { state.streak++; }
+        else if (state.lastActiveDate !== today) { state.streak = 1; }
+        state.todayScore = 0; state.todayTasks = 0; state.completedToday = 0;
+        state.todayDate = today; state.combo = 0; state.bonusActive = false;
+        // Clear completed tasks from previous days
+        state.tasks = state.tasks.filter(t => !t.done);
+        // Add daily habits
+        addDailyHabits();
+        save();
+    }
+    state.lastActiveDate = today;
+}
+
+// ============================================================
+// DAILY HABITS
+// ============================================================
+function addDailyHabits() {
+    // Remove old habits that weren't completed
+    state.tasks = state.tasks.filter(t => t.category !== 'habits');
+    // Add fresh habits for today (day-specific)
+    const habits = getDailyHabits();
+    const now = Date.now();
+    habits.forEach((h, i) => {
+        state.tasks.push({
+            id: now + 9000 + i,
+            text: h.text,
+            category: 'habits',
+            urgency: 'none',
+            points: h.points,
+            done: false,
+            created: todayStr(),
+            completedAt: null,
+            isHabit: true
+        });
+    });
+}
+
+// Seed habits on first load if none exist today
+function ensureHabits() {
+    const todayHabits = state.tasks.filter(t => t.category === 'habits' && t.created === todayStr());
+    if (todayHabits.length === 0) {
+        addDailyHabits();
+        save();
+    }
+}
+
+// ============================================================
+// TASK PARSING
+// ============================================================
+function parseTask(text) {
+    const lower = text.toLowerCase();
+    let cat = 'other';
+    let urgency = 'none';
+    let points = CATEGORIES.other.points;
+
+    // Detect category
+    for (const [key, words] of Object.entries(KEYWORDS)) {
+        for (const word of words) {
+            if (lower.includes(word)) { cat = key; break; }
+        }
+        if (cat !== 'other') break;
+    }
+
+    // Detect urgency
+    if (lower.includes('overdue') || lower.includes('urgent') || lower.includes('asap') || lower.includes('now')) urgency = 'overdue';
+    else if (lower.includes('today') || lower.includes('this morning') || lower.includes('this arvo')) urgency = 'today';
+    else if (lower.includes('this week') || lower.includes('tomorrow') || lower.includes('monday') || lower.includes('tuesday') || lower.includes('wednesday') || lower.includes('thursday') || lower.includes('friday')) urgency = 'week';
+
+    // Detect value hints for quotes
+    let valueMultiplier = 1;
+    const moneyMatch = lower.match(/\$(\d+)/);
+    if (moneyMatch) {
+        const val = parseInt(moneyMatch[1]);
+        if (val >= 10000) valueMultiplier = 3;
+        else if (val >= 5000) valueMultiplier = 2;
+        else if (val >= 2000) valueMultiplier = 1.5;
+    }
+    if (lower.includes('big') || lower.includes('large') || lower.includes('full landscape')) valueMultiplier = Math.max(valueMultiplier, 2);
+
+    points = Math.round(CATEGORIES[cat].points * URGENCY[urgency] * valueMultiplier);
+
+    return {
+        id: Date.now(), text: text, category: cat, urgency: urgency,
+        points: points, done: false, created: todayStr(), completedAt: null
+    };
+}
+
+// ============================================================
+// AUDIO — Web Audio API synth
+// ============================================================
+let audioCtx;
+function getAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return audioCtx; }
+
+function playCoin() {
+    const ctx = getAudio();
+    // Coin cascade — multiple coins falling
+    [1200, 1500, 1800, 2100, 1400, 1700].forEach((freq, i) => {
+        const osc = ctx.createOscillator(); const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'sine'; osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.06);
+        osc.frequency.exponentialRampToValueAtTime(freq * 1.5, ctx.currentTime + i * 0.06 + 0.08);
+        gain.gain.setValueAtTime(0.25, ctx.currentTime + i * 0.06);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.06 + 0.2);
+        osc.start(ctx.currentTime + i * 0.06); osc.stop(ctx.currentTime + i * 0.06 + 0.2);
+    });
+    // Bass thud
+    const bass = ctx.createOscillator(); const bassGain = ctx.createGain();
+    bass.connect(bassGain); bassGain.connect(ctx.destination);
+    bass.type = 'sine'; bass.frequency.value = 80;
+    bassGain.gain.setValueAtTime(0.4, ctx.currentTime);
+    bassGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    bass.start(ctx.currentTime); bass.stop(ctx.currentTime + 0.3);
+    // Shimmer
+    const shimmer = ctx.createOscillator(); const shimGain = ctx.createGain();
+    shimmer.connect(shimGain); shimGain.connect(ctx.destination);
+    shimmer.type = 'sine'; shimmer.frequency.setValueAtTime(3000, ctx.currentTime + 0.3);
+    shimmer.frequency.exponentialRampToValueAtTime(4000, ctx.currentTime + 0.5);
+    shimGain.gain.setValueAtTime(0.1, ctx.currentTime + 0.3);
+    shimGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.7);
+    shimmer.start(ctx.currentTime + 0.3); shimmer.stop(ctx.currentTime + 0.7);
+}
+
+function playJackpot() {
+    const ctx = getAudio();
+    [523, 659, 784, 1047].forEach((freq, i) => {
+        const osc = ctx.createOscillator(); const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'square'; osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.15, ctx.currentTime + i * 0.15);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.4);
+        osc.start(ctx.currentTime + i * 0.15); osc.stop(ctx.currentTime + i * 0.15 + 0.4);
+    });
+}
+
+function playCombo() {
+    const ctx = getAudio(); const osc = ctx.createOscillator(); const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(400, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(1600, ctx.currentTime + 0.2);
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.4);
+}
+
+function playBonus() {
+    const ctx = getAudio();
+    [880, 1100, 880, 1320].forEach((freq, i) => {
+        const osc = ctx.createOscillator(); const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'sine'; osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.2, ctx.currentTime + i * 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.1 + 0.15);
+        osc.start(ctx.currentTime + i * 0.1); osc.stop(ctx.currentTime + i * 0.1 + 0.15);
+    });
+}
+
+function playAdd() {
+    const ctx = getAudio(); const osc = ctx.createOscillator(); const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'sine'; osc.frequency.value = 600;
+    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.15);
+}
+
+// ============================================================
+// PARTICLES & CONFETTI
+// ============================================================
+function spawnParticles(x, y, count, emojis) {
+    for (let i = 0; i < count; i++) {
+        const el = document.createElement('div'); el.className = 'particle';
+        el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        el.style.left = x + 'px'; el.style.top = y + 'px';
+        el.style.setProperty('--tx', (Math.random() - 0.5) * 200 + 'px');
+        el.style.setProperty('--ty', -(Math.random() * 200 + 50) + 'px');
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 1500);
+    }
+}
+
+function spawnConfetti(count) {
+    const colors = ['#ffd700','#ff1744','#00ff88','#00d4ff','#b44dff','#ff6d00'];
+    for (let i = 0; i < count; i++) {
+        const el = document.createElement('div'); el.className = 'confetti';
+        el.style.left = Math.random() * window.innerWidth + 'px';
+        el.style.top = -10 + 'px';
+        el.style.background = colors[Math.floor(Math.random() * colors.length)];
+        el.style.setProperty('--tx', (Math.random() - 0.5) * 200 + 'px');
+        el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+        el.style.animationDelay = Math.random() * 0.5 + 's';
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 2500);
+    }
+}
+
+// ============================================================
+// ACTIONS
+// ============================================================
+function addTask() {
+    const input = document.getElementById('taskInput');
+    const text = input.value.trim();
+    if (!text) return;
+
+    const task = parseTask(text);
+    state.tasks.unshift(task);
+    state.todayTasks++;
+    save();
+    input.value = '';
+    playAdd();
+    render();
+
+    // Random bonus trigger (10% chance if no bonus active)
+    if (!state.bonusActive && Math.random() < 0.10 && state.tasks.filter(t => !t.done).length >= 2) {
+        triggerBonus();
+    }
+}
+
+function completeTask(id) {
+    const task = state.tasks.find(t => t.id === id);
+    if (!task || task.done) return;
+
+    // Calculate points
+    let multiplier = 1;
+    let multiText = '';
+
+    // Combo
+    state.combo++;
+    if (state.combo >= 3) {
+        multiplier *= 1 + (state.combo - 2) * 0.5;
+        multiText = 'COMBO x' + state.combo + ' ';
+    }
+
+    // Bonus round
+    if (state.bonusActive) {
+        multiplier *= state.bonusMultiplier;
+        multiText += state.bonusMultiplier + 'x BONUS ';
+        state.bonusActive = false;
+        document.getElementById('bonusBanner').classList.remove('active');
+    }
+
+    let points = Math.round(task.points * multiplier);
+
+    // Check bet
+    points = checkBetWin(id, points);
+    if (state.activeBet && state.activeBet.taskId === id) {
+        multiText += '🎲 BET WON ';
+    }
+
+    task.done = true;
+    task.completedAt = new Date().toISOString();
+    state.todayScore += points;
+    state.totalXP += points;
+    state.completedToday++;
+
+    // Show undo bar
+    showUndo(task, points);
+
+    // Animate card
+    const card = document.querySelector(`[data-id="${id}"]`);
+    if (card) {
+        const rect = card.getBoundingClientRect();
+        card.classList.add('completing');
+        spawnParticles(rect.left + rect.width / 2, rect.top, 12, ['🪙','💰','⭐','✨','💎']);
+        playCoin();
+    }
+
+    // Show payout
+    setTimeout(() => {
+        showPayout(points, multiplier, multiText, task.category);
+    }, 300);
+
+    // Combo display
+    if (state.combo >= 2) {
+        playCombo();
+        const cd = document.getElementById('comboDisplay');
+        cd.classList.add('active');
+        document.getElementById('comboText').textContent = '🔥 COMBO x' + state.combo;
+        clearTimeout(state.comboTimer);
+        state.comboTimer = setTimeout(() => { state.combo = 0; cd.classList.remove('active'); }, 60000);
+    }
+
+    // Check jackpot
+    if (state.todayScore >= DAILY_TARGET && state.todayScore - points < DAILY_TARGET) {
+        setTimeout(() => {
+            playJackpot();
+            spawnConfetti(80);
+            document.body.style.animation = 'jackpotFlash 0.5s ease 3';
+            setTimeout(() => document.body.style.animation = '', 1500);
+        }, 1500);
+    }
+
+    save();
+    setTimeout(() => render(), 600);
+}
+
+// Hold-to-complete (hold for 0.5s to confirm)
+let holdTimer = null;
+let holdInterval = null;
+let holdProgress = 0;
+
+function startHold(id, el) {
+    holdProgress = 0;
+    el.classList.add('filling');
+
+    // Tick sound while holding
+    const tickInterval = setInterval(() => playSlotTick(), 100);
+
+    holdInterval = setInterval(() => {
+        holdProgress += 5;
+        el.style.setProperty('--fill', holdProgress + '%');
+        if (holdProgress >= 100) {
+            clearInterval(holdInterval);
+            clearInterval(tickInterval);
+            holdInterval = null;
+            el.classList.remove('filling');
+            el.style.setProperty('--fill', '0%');
+            completeTask(id);
+        }
+    }, 25); // 500ms total (25ms x 20 steps at 5% each)
+
+    holdTimer = setTimeout(() => {}, 600);
+    // Store tick interval to clear on cancel
+    el._tickInterval = tickInterval;
+}
+
+function cancelHold() {
+    if (holdInterval) {
+        clearInterval(holdInterval);
+        holdInterval = null;
+    }
+    holdProgress = 0;
+    document.querySelectorAll('.task-check.filling').forEach(el => {
+        el.classList.remove('filling');
+        el.style.setProperty('--fill', '0%');
+        if (el._tickInterval) clearInterval(el._tickInterval);
+    });
+}
+
+// Undo last completion
+let lastCompleted = null;
+let undoTimeout = null;
+
+function showUndo(task, points) {
+    // Remove existing undo bar
+    document.querySelectorAll('.undo-bar').forEach(el => el.remove());
+    if (undoTimeout) clearTimeout(undoTimeout);
+
+    lastCompleted = { task, points };
+
+    const bar = document.createElement('div');
+    bar.className = 'undo-bar';
+    bar.innerHTML = 'Task completed <button onclick="undoComplete()">UNDO</button>';
+    document.body.appendChild(bar);
+
+    undoTimeout = setTimeout(() => {
+        bar.remove();
+        lastCompleted = null;
+    }, 5000);
+}
+
+function undoComplete() {
+    if (!lastCompleted) return;
+    const task = state.tasks.find(t => t.id === lastCompleted.task.id);
+    if (task) {
+        task.done = false;
+        task.completedAt = null;
+        state.todayScore -= lastCompleted.points;
+        state.totalXP -= lastCompleted.points;
+        state.completedToday--;
+        if (state.todayScore < 0) state.todayScore = 0;
+        save();
+        render();
+    }
+    document.querySelectorAll('.undo-bar').forEach(el => el.remove());
+    lastCompleted = null;
+}
+
+function deleteTask(id) {
+    state.tasks = state.tasks.filter(t => t.id !== id);
+    save(); render();
+}
+
+function showPayout(points, multiplier, multiText, category) {
+    const overlay = document.getElementById('payoutOverlay');
+    overlay.classList.add('active');
+
+    // Animate count up
+    const amountEl = document.getElementById('payoutAmount');
+    let current = 0;
+    const step = Math.ceil(points / 20);
+    const interval = setInterval(() => {
+        current = Math.min(current + step, points);
+        amountEl.textContent = '+' + current;
+        if (current >= points) clearInterval(interval);
+    }, 30);
+
+    document.getElementById('payoutMulti').textContent = multiplier > 1 ? multiText : '';
+    document.getElementById('payoutSub').textContent = CATEGORIES[category].label + ' completed';
+
+    setTimeout(() => {
+        overlay.classList.remove('active');
+        updateTopBar();
+    }, 2000);
+}
+
+function triggerBonus() {
+    state.bonusActive = true;
+    state.bonusMultiplier = [2, 3, 5][Math.floor(Math.random() * 3)];
+    state.bonusEnd = Date.now() + 30 * 60 * 1000;
+    save();
+    playBonus();
+    spawnConfetti(30);
+
+    const banner = document.getElementById('bonusBanner');
+    banner.classList.add('active');
+    document.getElementById('bonusMultiplier').textContent = state.bonusMultiplier;
+
+    // Timer
+    const timerEl = document.getElementById('bonusTimer');
+    const tick = setInterval(() => {
+        const left = Math.max(0, state.bonusEnd - Date.now());
+        if (left <= 0 || !state.bonusActive) {
+            clearInterval(tick);
+            state.bonusActive = false;
+            banner.classList.remove('active');
+            save();
+            return;
+        }
+        const m = Math.floor(left / 60000);
+        const s = Math.floor((left % 60000) / 1000);
+        timerEl.textContent = m + ':' + String(s).padStart(2, '0');
+    }, 1000);
+}
+
+// ============================================================
+// CASH OUT
+// ============================================================
+function cashOut() {
+    const overlay = document.getElementById('cashoutOverlay');
+    overlay.classList.add('active');
+
+    const score = state.todayScore;
+    const beatHouse = score >= DAILY_TARGET;
+
+    document.getElementById('cashoutScore').textContent = score;
+    document.getElementById('cashoutVerdict').textContent = beatHouse ? '🎰 YOU BEAT THE HOUSE! 🎰' : 'Better luck tomorrow...';
+    document.getElementById('cashoutVerdict').style.color = beatHouse ? 'var(--gold)' : 'var(--text2)';
+
+    const activeTasks = state.tasks.filter(t => !t.done).length;
+    const stats = `
+        <div class="cashout-stat"><span class="label">Tasks completed</span><span class="value" style="color:var(--neon-green)">${state.completedToday}</span></div>
+        <div class="cashout-stat"><span class="label">Tasks remaining</span><span class="value" style="color:${activeTasks > 0 ? 'var(--red)' : 'var(--neon-green)'}">${activeTasks}</span></div>
+        <div class="cashout-stat"><span class="label">Best combo</span><span class="value" style="color:var(--gold)">x${state.combo || 1}</span></div>
+        <div class="cashout-stat"><span class="label">Current streak</span><span class="value" style="color:var(--gold)">${state.streak} days</span></div>
+        <div class="cashout-stat"><span class="label">Total lifetime XP</span><span class="value" style="color:var(--neon-purple)">${state.totalXP}</span></div>
+    `;
+    document.getElementById('cashoutStats').innerHTML = stats;
+
+    if (beatHouse) {
+        playJackpot();
+        spawnConfetti(100);
+    }
+}
+
+function closeCashout() {
+    document.getElementById('cashoutOverlay').classList.remove('active');
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function getLevel() {
+    let lvl = LEVELS[0];
+    for (const l of LEVELS) { if (state.todayScore >= l.xp) lvl = l; }
+    return lvl;
+}
+
+function getNextLevel() {
+    const current = getLevel();
+    const idx = LEVELS.indexOf(current);
+    return idx < LEVELS.length - 1 ? LEVELS[idx + 1] : null;
+}
+
+function updateTopBar() {
+    const lvl = getLevel();
+    const next = getNextLevel();
+    document.getElementById('levelBadge').textContent = 'LVL ' + lvl.level + ' ' + lvl.title;
+    document.getElementById('streakCount').textContent = state.streak;
+    document.getElementById('totalCoins').textContent = state.totalXP;
+
+    if (next) {
+        const progress = ((state.todayScore - lvl.xp) / (next.xp - lvl.xp)) * 100;
+        document.getElementById('xpBar').style.width = Math.min(100, progress) + '%';
+        document.getElementById('xpText').textContent = state.todayScore + ' / ' + next.xp + ' → LVL ' + next.level;
+    } else {
+        document.getElementById('xpBar').style.width = '100%';
+        document.getElementById('xpText').textContent = 'MAX LEVEL — LEGEND';
+    }
+}
+
+function render() {
+    checkDay();
+    updateTopBar();
+
+    // Score
+    const scoreEl = document.getElementById('todayScore');
+    scoreEl.textContent = state.todayScore;
+    scoreEl.classList.add('bump');
+    setTimeout(() => scoreEl.classList.remove('bump'), 300);
+    document.getElementById('targetDisplay').textContent = DAILY_TARGET;
+
+    // Filter tasks
+    const active = state.tasks.filter(t => !t.done);
+    const done = state.tasks.filter(t => t.done);
+    let filtered = currentFilter === 'all' ? [...active, ...done] : [...active.filter(t => t.category === currentFilter), ...done.filter(t => t.category === currentFilter)];
+
+    // Counts
+    document.getElementById('countAll').textContent = active.length;
+    document.getElementById('countQuotes').textContent = active.filter(t => t.category === 'quotes').length;
+    document.getElementById('countSite').textContent = active.filter(t => t.category === 'site-visits').length;
+    document.getElementById('countAdmin').textContent = active.filter(t => t.category === 'admin').length;
+    document.getElementById('countEmployment').textContent = active.filter(t => t.category === 'employment').length;
+    document.getElementById('countHabits').textContent = active.filter(t => t.category === 'habits').length;
+    document.getElementById('countOther').textContent = active.filter(t => t.category === 'other').length;
+
+    // Task list
+    const list = document.getElementById('taskList');
+    if (filtered.length === 0) {
+        list.innerHTML = '<div class="empty-state"><div class="emoji">🎰</div><div>No tasks yet — type one below to start earning!</div></div>';
+        return;
+    }
+
+    list.innerHTML = filtered.map(t => {
+        const cat = CATEGORIES[t.category];
+        const urgLabel = t.urgency !== 'none' ? '<span style="color:' + (t.urgency === 'overdue' ? 'var(--red)' : 'var(--gold)') + '">' + t.urgency.toUpperCase() + '</span>' : '';
+        return `<div class="task-card ${t.done ? 'done' : ''}" data-cat="${t.category}" data-id="${t.id}">
+            ${t.done ? '<div style="width:32px;height:32px;border-radius:50%;background:var(--neon-green);display:flex;align-items:center;justify-content:center;font-size:0.9rem;flex-shrink:0">✓</div>' : '<div class="task-check" data-task="' + t.id + '" onmousedown="startHold(' + t.id + ',this)" onmouseup="cancelHold()" onmouseleave="cancelHold()" ontouchstart="startHold(' + t.id + ',this)" ontouchend="cancelHold()" ontouchcancel="cancelHold()"></div>'}
+            <div class="task-info">
+                <div class="task-title">${t.text}</div>
+                <div class="task-meta">
+                    <span class="task-cat" data-cat="${t.category}">${cat.icon} ${cat.label}</span>
+                    ${urgLabel}
+                </div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0">
+                <div class="task-points">${t.done ? '✓' : '+' + t.points}</div>
+                ${!t.done && !state.activeBet ? '<button onclick="openBetPanel(' + t.id + ')" style="background:linear-gradient(135deg,var(--red),#cc0000);border:none;border-radius:8px;padding:2px 8px;font-size:0.6rem;color:#fff;font-weight:700;cursor:pointer;font-family:Orbitron,monospace;letter-spacing:0.5px">BET</button>' : ''}
+            </div>
+            <button class="task-delete" onclick="deleteTask(${t.id})">×</button>
+        </div>`;
+    }).join('');
+}
+
+function filterTasks(cat, el) {
+    currentFilter = cat;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    render();
+}
+
+function showPage(page, el) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(page + 'Page').classList.add('active');
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    if (el) el.classList.add('active');
+    if (page === 'history') renderHistory();
+    if (page === 'tomorrow') renderTomorrow();
+}
+
+function renderHistory() {
+    // Include today
+    const allDays = { ...state.history };
+    allDays[todayStr()] = { score: state.todayScore, tasks: state.todayTasks, completed: state.completedToday };
+
+    const dates = Object.keys(allDays).sort().slice(-14); // Last 14 days
+    const maxScore = Math.max(DAILY_TARGET, ...dates.map(d => allDays[d].score));
+    const today = todayStr();
+
+    const barHtml = dates.map(d => {
+        const data = allDays[d];
+        const height = Math.max(3, (data.score / maxScore) * 100);
+        const isToday = d === today;
+        const isJackpot = data.score >= DAILY_TARGET;
+        const dayName = new Date(d).toLocaleDateString('en-NZ', { weekday: 'short' }).substring(0, 2);
+        return `<div class="history-day ${isToday ? 'today' : ''} ${isJackpot ? 'jackpot' : ''}" style="height:${height}%" title="${d}: ${data.score} pts">
+            <div class="day-score">${data.score}</div>
+            <div class="day-label">${dayName}</div>
+        </div>`;
+    }).join('');
+
+    const targetHeight = (DAILY_TARGET / maxScore) * 100;
+    document.getElementById('historyBar').innerHTML = barHtml;
+
+    // Stats
+    const totalDays = dates.length;
+    const totalScore = dates.reduce((s, d) => s + allDays[d].score, 0);
+    const jackpotDays = dates.filter(d => allDays[d].score >= DAILY_TARGET).length;
+    const bestDay = dates.reduce((best, d) => allDays[d].score > (allDays[best]?.score || 0) ? d : best, dates[0]);
+    const avgScore = totalDays > 0 ? Math.round(totalScore / totalDays) : 0;
+
+    document.getElementById('historyStats').innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
+                <div style="font-size:0.65rem;color:var(--text2);text-transform:uppercase">Avg Score</div>
+                <div style="font-family:'Orbitron',monospace;font-size:1.2rem;color:var(--gold)">${avgScore}</div>
+            </div>
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
+                <div style="font-size:0.65rem;color:var(--text2);text-transform:uppercase">Jackpot Days</div>
+                <div style="font-family:'Orbitron',monospace;font-size:1.2rem;color:var(--neon-green)">${jackpotDays}/${totalDays}</div>
+            </div>
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
+                <div style="font-size:0.65rem;color:var(--text2);text-transform:uppercase">Best Day</div>
+                <div style="font-family:'Orbitron',monospace;font-size:1.2rem;color:var(--gold)">${allDays[bestDay]?.score || 0}</div>
+            </div>
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
+                <div style="font-size:0.65rem;color:var(--text2);text-transform:uppercase">All-Time XP</div>
+                <div style="font-family:'Orbitron',monospace;font-size:1.2rem;color:var(--neon-purple)">${state.totalXP}</div>
+            </div>
+        </div>
+
+        <div style="font-family:'Orbitron',monospace;font-size:0.8rem;color:var(--text);margin-bottom:8px">Daily Record</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+            ${dates.slice().reverse().map(d => {
+                const data = allDays[d];
+                const isToday = d === today;
+                const beatHouse = data.score >= DAILY_TARGET;
+                const dayName = new Date(d).toLocaleDateString('en-NZ', { weekday: 'short', day: 'numeric', month: 'short' });
+                const lvlNum = data.level || 1;
+                const lvlTitle = data.title || LEVELS[0].title;
+
+                return '<div style="background:var(--bg2);border:1px solid ' + (beatHouse ? 'var(--gold)' : 'var(--border)') + ';border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px' + (isToday ? ';box-shadow:0 0 10px rgba(255,215,0,0.15)' : '') + '">' +
+                    '<div style="flex-shrink:0;text-align:center;width:50px">' +
+                        '<div style="font-size:0.65rem;color:var(--text2)">' + dayName + '</div>' +
+                        '<div style="font-size:' + (isToday ? '0.65rem' : '0.6rem') + ';color:' + (isToday ? 'var(--gold)' : 'var(--text2)') + '">' + (isToday ? 'TODAY' : '') + '</div>' +
+                    '</div>' +
+                    '<div style="flex:1">' +
+                        '<div style="display:flex;align-items:center;gap:6px">' +
+                            '<span style="font-family:Orbitron,monospace;font-size:1rem;font-weight:700;color:' + (beatHouse ? 'var(--gold)' : 'var(--text)') + '">' + data.score + '</span>' +
+                            '<span style="font-size:0.6rem;color:var(--text2)">pts</span>' +
+                            (beatHouse ? '<span style="font-size:0.65rem;color:var(--gold)">🎰 JACKPOT</span>' : '') +
+                        '</div>' +
+                        '<div style="font-size:0.65rem;color:var(--text2)">' + (data.completed || 0) + ' tasks done · LVL ' + lvlNum + ' ' + lvlTitle + '</div>' +
+                    '</div>' +
+                    '<div style="font-family:Orbitron,monospace;font-size:0.7rem;color:' + (beatHouse ? 'var(--neon-green)' : 'var(--text2)') + '">' + (beatHouse ? 'W' : 'L') + '</div>' +
+                '</div>';
+            }).join('')}
+        </div>
+    `;
+}
+
+// Enter key
+document.getElementById('taskInput').addEventListener('keydown', e => { if (e.key === 'Enter') addTask(); });
+
+// Export
+function exportData() {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = 'planner-backup-' + todayStr() + '.json'; a.click();
+}
+
+// ============================================================
+// BETTING SYSTEM
+// ============================================================
+let betTaskId = null;
+let betTimerInterval = null;
+
+function openBetPanel(taskId) {
+    const task = state.tasks.find(t => t.id === taskId);
+    if (!task) return;
+    betTaskId = taskId;
+    document.getElementById('betTaskName').textContent = task.text;
+    document.getElementById('betBasePoints').textContent = task.points;
+    document.getElementById('betPanel').style.display = 'flex';
+}
+
+function closeBetPanel() {
+    document.getElementById('betPanel').style.display = 'none';
+    betTaskId = null;
+}
+
+function placeBet(minutes, winMultiplier, lossPenalty) {
+    if (!betTaskId) return;
+    const task = state.tasks.find(t => t.id === betTaskId);
+    if (!task) return;
+
+    state.activeBet = {
+        taskId: betTaskId,
+        minutes: minutes,
+        winMultiplier: winMultiplier,
+        lossPenalty: lossPenalty,
+        startTime: Date.now(),
+        endTime: Date.now() + minutes * 60 * 1000,
+        basePoints: task.points
+    };
+    save();
+
+    closeBetPanel();
+    playBonus();
+    spawnParticles(window.innerWidth / 2, window.innerHeight / 2, 10, ['🎲', '💰', '⏱️', '🔥']);
+
+    // Start timer display
+    startBetTimer();
+    render();
+}
+
+function startBetTimer() {
+    const timer = document.getElementById('betTimer');
+    timer.style.display = 'block';
+
+    if (betTimerInterval) clearInterval(betTimerInterval);
+
+    function updateTimer() {
+        if (!state.activeBet) {
+            timer.style.display = 'none';
+            clearInterval(betTimerInterval);
+            return;
+        }
+
+        const remaining = state.activeBet.endTime - Date.now();
+        const task = state.tasks.find(t => t.id === state.activeBet.taskId);
+        document.getElementById('betTimerTask').textContent = task ? task.text.substring(0, 30) + '...' : '';
+
+        if (remaining <= 0) {
+            // TIME'S UP — they lost
+            document.getElementById('betTimerClock').textContent = "TIME'S UP";
+            document.getElementById('betTimerClock').style.color = 'var(--red)';
+            document.getElementById('betTimerLabel').textContent = 'BET LOST';
+            document.getElementById('betTimerLabel').style.color = 'var(--red)';
+
+            const penalty = Math.round(state.activeBet.basePoints * state.activeBet.lossPenalty);
+            state.todayScore = Math.max(0, state.todayScore - penalty);
+            state.totalXP = Math.max(0, state.totalXP - penalty);
+
+            // Lost sound
+            playBetLose();
+
+            state.activeBet = null;
+            save();
+            render();
+
+            setTimeout(() => {
+                timer.style.display = 'none';
+                document.getElementById('betTimerClock').style.color = 'var(--text)';
+                document.getElementById('betTimerLabel').textContent = 'BET ACTIVE';
+                document.getElementById('betTimerLabel').style.color = 'var(--gold)';
+            }, 3000);
+
+            clearInterval(betTimerInterval);
+            return;
+        }
+
+        const mins = Math.floor(remaining / 60000);
+        const secs = Math.floor((remaining % 60000) / 1000);
+        document.getElementById('betTimerClock').textContent = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+
+        // Flash red when under 1 minute
+        if (remaining < 60000) {
+            document.getElementById('betTimerClock').style.color = remaining % 1000 < 500 ? 'var(--red)' : 'var(--gold)';
+            document.getElementById('betTimerLabel').textContent = '⚠️ HURRY UP';
+        }
+        // Yellow when under 5 minutes
+        else if (remaining < 300000) {
+            document.getElementById('betTimerClock').style.color = 'var(--gold)';
+        } else {
+            document.getElementById('betTimerClock').style.color = 'var(--neon-green)';
+        }
+    }
+
+    updateTimer();
+    betTimerInterval = setInterval(updateTimer, 1000);
+}
+
+function playBetLose() {
+    const ctx = getAudio();
+    [400, 300, 200, 150].forEach((freq, i) => {
+        const osc = ctx.createOscillator(); const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'sawtooth'; osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.15, ctx.currentTime + i * 0.15);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.3);
+        osc.start(ctx.currentTime + i * 0.15); osc.stop(ctx.currentTime + i * 0.15 + 0.3);
+    });
+}
+
+function playBetWin() {
+    const ctx = getAudio();
+    // Rising fanfare
+    [523, 659, 784, 1047, 1319, 1568].forEach((freq, i) => {
+        const osc = ctx.createOscillator(); const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'sine'; osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.25, ctx.currentTime + i * 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.1 + 0.4);
+        osc.start(ctx.currentTime + i * 0.1); osc.stop(ctx.currentTime + i * 0.1 + 0.4);
+    });
+    // Big bass drop
+    const bass = ctx.createOscillator(); const bGain = ctx.createGain();
+    bass.connect(bGain); bGain.connect(ctx.destination);
+    bass.type = 'sine'; bass.frequency.setValueAtTime(120, ctx.currentTime + 0.5);
+    bass.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.9);
+    bGain.gain.setValueAtTime(0.5, ctx.currentTime + 0.5);
+    bGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.2);
+    bass.start(ctx.currentTime + 0.5); bass.stop(ctx.currentTime + 1.2);
+}
+
+function cancelBet() {
+    state.activeBet = null;
+    save();
+    document.getElementById('betTimer').style.display = 'none';
+    if (betTimerInterval) clearInterval(betTimerInterval);
+    render();
+}
+
+// Check if completing a task wins a bet
+function checkBetWin(taskId, basePoints) {
+    if (!state.activeBet || state.activeBet.taskId !== taskId) return basePoints;
+
+    const remaining = state.activeBet.endTime - Date.now();
+    if (remaining > 0) {
+        // WON THE BET
+        const winPoints = Math.round(basePoints * state.activeBet.winMultiplier);
+        const bonus = winPoints - basePoints;
+
+        playBetWin();
+        spawnConfetti(60);
+        spawnParticles(window.innerWidth / 2, window.innerHeight / 3, 20, ['💰', '🎰', '🔥', '⭐', '💎', '🏆']);
+
+        // Hide timer
+        document.getElementById('betTimer').style.display = 'none';
+        if (betTimerInterval) clearInterval(betTimerInterval);
+
+        state.activeBet = null;
+        save();
+
+        return winPoints;
+    }
+
+    return basePoints;
+}
+
+// ============================================================
+// SLOT MACHINE
+// ============================================================
+let spinning = false;
+let selectedSlotTask = null;
+
+function playSlotTick() {
+    const ctx = getAudio(); const osc = ctx.createOscillator(); const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'sine'; osc.frequency.value = 800 + Math.random() * 400;
+    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.05);
+}
+
+function playSlotWin() {
+    const ctx = getAudio();
+    [660, 880, 1100, 1320, 1760].forEach((freq, i) => {
+        const osc = ctx.createOscillator(); const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'sine'; osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.2, ctx.currentTime + i * 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.08 + 0.3);
+        osc.start(ctx.currentTime + i * 0.08); osc.stop(ctx.currentTime + i * 0.08 + 0.3);
+    });
+}
+
+function spinSlot() {
+    if (spinning) return;
+
+    // Get top priority tasks (not done, sorted by points)
+    const active = state.tasks.filter(t => !t.done).sort((a, b) => b.points - a.points);
+    if (active.length === 0) {
+        document.getElementById('reelText').textContent = 'No tasks left — you smashed it!';
+        return;
+    }
+
+    // Top tasks weighted by points (higher points = more likely)
+    const pool = active.slice(0, Math.min(15, active.length));
+
+    spinning = true;
+    selectedSlotTask = null;
+    const btn = document.getElementById('spinBtn');
+    btn.textContent = '...';
+    btn.style.pointerEvents = 'none';
+
+    const reelText = document.getElementById('reelText');
+    const reelStrip = document.getElementById('reelStrip');
+    const slotPoints = document.getElementById('slotPoints');
+    slotPoints.textContent = '';
+
+    let tickCount = 0;
+    const totalTicks = 20 + Math.floor(Math.random() * 10);
+    let delay = 50;
+
+    function tick() {
+        tickCount++;
+        const randomTask = pool[Math.floor(Math.random() * pool.length)];
+        const cat = CATEGORIES[randomTask.category] || CATEGORIES.other;
+
+        reelText.textContent = cat.icon + ' ' + randomTask.text;
+        reelText.style.color = cat.color;
+        reelStrip.style.transform = 'translateY(' + (Math.random() > 0.5 ? 3 : -3) + 'px)';
+        playSlotTick();
+
+        if (tickCount >= totalTicks) {
+            // Final selection — weighted toward highest points
+            const weights = pool.map(t => t.points);
+            const totalWeight = weights.reduce((s, w) => s + w, 0);
+            let r = Math.random() * totalWeight;
+            let winner = pool[0];
+            for (let i = 0; i < pool.length; i++) {
+                r -= weights[i];
+                if (r <= 0) { winner = pool[i]; break; }
+            }
+
+            selectedSlotTask = winner;
+            const winCat = CATEGORIES[winner.category] || CATEGORIES.other;
+            reelText.textContent = winCat.icon + ' ' + winner.text;
+            reelText.style.color = 'var(--gold)';
+            reelStrip.style.transform = 'translateY(0)';
+            slotPoints.textContent = '+' + winner.points + ' pts';
+
+            playSlotWin();
+            spawnParticles(window.innerWidth / 2, 200, 15, ['🎰', '💰', '🪙', '⭐', '🔥']);
+
+            // Flash the matching task card
+            setTimeout(() => {
+                const card = document.querySelector('[data-id="' + winner.id + '"]');
+                if (card) {
+                    card.style.border = '1px solid var(--gold)';
+                    card.style.boxShadow = '0 0 20px rgba(255,215,0,0.3)';
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    setTimeout(() => {
+                        card.style.border = '1px solid var(--border)';
+                        card.style.boxShadow = 'none';
+                    }, 3000);
+                }
+            }, 500);
+
+            spinning = false;
+            btn.textContent = 'SPIN';
+            btn.style.pointerEvents = 'auto';
+            return;
+        }
+
+        // Slow down toward end
+        if (tickCount > totalTicks * 0.6) delay += 15;
+        if (tickCount > totalTicks * 0.8) delay += 30;
+
+        setTimeout(tick, delay);
+    }
+
+    tick();
+}
+
+// ============================================================
+// TOMORROW PLANNING
+// ============================================================
+let tomorrow = JSON.parse(localStorage.getItem('planner_tomorrow') || 'null') || {
+    date: '', needleMover: '', priorities: []
+};
+
+function getTomorrowStr() {
+    const d = new Date(); d.setDate(d.getDate() + 1);
+    return d.toISOString().split('T')[0];
+}
+
+function getTomorrowNice() {
+    const d = new Date(); d.setDate(d.getDate() + 1);
+    return d.toLocaleDateString('en-NZ', { weekday: 'long', day: 'numeric', month: 'long' });
+}
+
+function saveTomorrow() {
+    tomorrow.date = getTomorrowStr();
+    tomorrow.needleMover = document.getElementById('needleMover').value;
+    localStorage.setItem('planner_tomorrow_' + currentProfile, JSON.stringify(tomorrow));
+    renderTomorrowForecast();
+}
+
+function addPriority() {
+    const input = document.getElementById('priorityInput');
+    const text = input.value.trim();
+    if (!text) return;
+
+    const parsed = parseTask(text);
+    tomorrow.priorities.push({
+        id: Date.now(), text: text, category: parsed.category,
+        urgency: parsed.urgency, points: parsed.points
+    });
+    input.value = '';
+    saveTomorrow();
+    renderTomorrow();
+    playAdd();
+}
+
+function addPriorityFromTask(taskId) {
+    const task = state.tasks.find(t => t.id === taskId);
+    if (!task) return;
+    // Don't add duplicates
+    if (tomorrow.priorities.find(p => p.text === task.text)) return;
+
+    tomorrow.priorities.push({
+        id: Date.now(), text: task.text, category: task.category,
+        urgency: 'today', points: Math.round(task.points * 1.5)
+    });
+    saveTomorrow();
+    renderTomorrow();
+    playAdd();
+}
+
+function removePriority(id) {
+    tomorrow.priorities = tomorrow.priorities.filter(p => p.id !== id);
+    saveTomorrow();
+    renderTomorrow();
+}
+
+function movePriority(id, direction) {
+    const idx = tomorrow.priorities.findIndex(p => p.id === id);
+    if (idx < 0) return;
+    const newIdx = idx + direction;
+    if (newIdx < 0 || newIdx >= tomorrow.priorities.length) return;
+    const temp = tomorrow.priorities[idx];
+    tomorrow.priorities[idx] = tomorrow.priorities[newIdx];
+    tomorrow.priorities[newIdx] = temp;
+    saveTomorrow();
+    renderTomorrow();
+}
+
+function lockInTomorrow() {
+    // Move needle mover to top of task list as highest priority
+    if (tomorrow.needleMover) {
+        const parsed = parseTask(tomorrow.needleMover);
+        state.tasks.unshift({
+            id: Date.now(), text: '⭐ ' + tomorrow.needleMover,
+            category: parsed.category, urgency: 'today',
+            points: Math.max(parsed.points * 2, 100),
+            done: false, created: getTomorrowStr(), completedAt: null
+        });
+    }
+
+    // Add priorities as tasks
+    tomorrow.priorities.forEach((p, i) => {
+        // Check not already in task list
+        if (!state.tasks.find(t => t.text === p.text || t.text === '⭐ ' + p.text)) {
+            state.tasks.push({
+                id: Date.now() + i + 1, text: p.text,
+                category: p.category, urgency: 'today',
+                points: p.points, done: false,
+                created: getTomorrowStr(), completedAt: null
+            });
+        }
+    });
+
+    save();
+    playJackpot();
+    spawnConfetti(40);
+
+    // Show confirmation
+    const btn = document.querySelector('#tomorrowPage button:last-child');
+    btn.textContent = '✅ LOCKED IN';
+    btn.style.background = 'var(--neon-green)';
+    setTimeout(() => {
+        btn.textContent = 'LOCK IN TOMORROW\'S PLAN';
+        btn.style.background = 'linear-gradient(135deg,var(--gold),var(--gold2))';
+    }, 2000);
+}
+
+function renderTomorrow() {
+    document.getElementById('tomorrowDate').textContent = getTomorrowNice();
+    document.getElementById('needleMover').value = tomorrow.needleMover || '';
+
+    // Priority list
+    const list = document.getElementById('priorityList');
+
+    // Needle mover at top
+    let html = '';
+    if (tomorrow.needleMover) {
+        const parsed = parseTask(tomorrow.needleMover);
+        html += `<div class="priority-item needle">
+            <div class="p-rank">⭐</div>
+            <div class="p-text" style="color:var(--gold);font-weight:600">${tomorrow.needleMover}</div>
+            <div class="p-pts">+${Math.max(parsed.points * 2, 100)}</div>
+        </div>`;
+    }
+
+    // Rest of priorities
+    tomorrow.priorities.forEach((p, i) => {
+        const cat = CATEGORIES[p.category] || CATEGORIES.other;
+        html += `<div class="priority-item">
+            <div class="p-rank">${i + 1}</div>
+            <div class="p-text">${p.text}</div>
+            <span class="p-cat">${cat.icon} ${cat.label}</span>
+            <div class="p-pts">+${p.points}</div>
+            <div class="p-actions">
+                <button class="p-btn" onclick="movePriority(${p.id},-1)">↑</button>
+                <button class="p-btn" onclick="movePriority(${p.id},1)">↓</button>
+                <button class="p-btn" onclick="removePriority(${p.id})" style="color:var(--red)">×</button>
+            </div>
+        </div>`;
+    });
+
+    list.innerHTML = html || '<div style="text-align:center;padding:20px;color:var(--text2);font-size:0.8rem">No priorities yet — add tasks below or pull from your list</div>';
+
+    // Pull from existing tasks
+    const activeTasks = state.tasks.filter(t => !t.done).slice(0, 20);
+    const pullDiv = document.getElementById('pullFromTasks');
+    pullDiv.innerHTML = activeTasks.map(t => {
+        const alreadyAdded = tomorrow.priorities.find(p => p.text === t.text);
+        return `<div class="pull-chip ${alreadyAdded ? 'added' : ''}" onclick="addPriorityFromTask(${t.id})">${t.text.substring(0, 35)}${t.text.length > 35 ? '...' : ''}</div>`;
+    }).join('');
+
+    renderTomorrowForecast();
+}
+
+function renderTomorrowForecast() {
+    const count = tomorrow.priorities.length + (tomorrow.needleMover ? 1 : 0);
+    let totalPts = tomorrow.priorities.reduce((s, p) => s + p.points, 0);
+    if (tomorrow.needleMover) {
+        const parsed = parseTask(tomorrow.needleMover);
+        totalPts += Math.max(parsed.points * 2, 100);
+    }
+
+    document.getElementById('tmrwTaskCount').textContent = count;
+    document.getElementById('tmrwPoints').textContent = totalPts;
+
+    const vsTarget = document.getElementById('tmrwVsTarget');
+    if (totalPts >= DAILY_TARGET) {
+        vsTarget.textContent = '🎰 JACKPOT';
+        vsTarget.style.color = 'var(--neon-green)';
+    } else {
+        vsTarget.textContent = (DAILY_TARGET - totalPts) + ' short';
+        vsTarget.style.color = 'var(--red)';
+    }
+}
+
+// Check if yesterday's tomorrow plan should load today
+function checkTomorrowPlan() {
+    if (tomorrow.date === todayStr() && tomorrow.priorities.length > 0) {
+        // Yesterday's plan is today — already locked in via lockInTomorrow
+        // Reset for new tomorrow
+        tomorrow = { date: '', needleMover: '', priorities: [] };
+        localStorage.setItem('planner_tomorrow', JSON.stringify(tomorrow));
+    }
+}
+
+// ============================================================
+// SEED TASKS — pre-loaded from brain dump
+// ============================================================
+function seedTasks() {
+    if (localStorage.getItem('planner_seeded')) return; // Only seed once
+
+    const seed = [
+        // QUOTES — 50 base pts
+        { text: 'Quote — Rolleston design + price', category: 'quotes', urgency: 'today', points: 75 },
+        { text: 'Quote — 11 Evelyn Cres', category: 'quotes', urgency: 'today', points: 75 },
+        { text: 'Quote — 77 Velino (awaiting client reply)', category: 'quotes', urgency: 'week', points: 60 },
+        { text: 'Quote — Julie, 493 Armagh St', category: 'quotes', urgency: 'week', points: 60 },
+        { text: 'Quote — 40 Hillsborough Tce (Rebekah Scott)', category: 'quotes', urgency: 'week', points: 60 },
+        { text: 'Quote — 1 Applefield Court (late May/early June)', category: 'quotes', urgency: 'none', points: 50 },
+        { text: 'Quote — 17 Toledo Place (Charlotte)', category: 'quotes', urgency: 'week', points: 60 },
+        { text: 'Quote — 3 Pilgrim Place (Kathryn — commercial)', category: 'quotes', urgency: 'week', points: 60 },
+        { text: 'Quote — 203 Cashmere Rd', category: 'quotes', urgency: 'week', points: 60 },
+        { text: 'Quote — 10 Marangai Dr', category: 'quotes', urgency: 'week', points: 60 },
+
+        // BIG BOOKED JOBS — schedule these
+        { text: 'PLAN + SCHEDULE — Ger deck $19,121 incl GST ⬅ biggest revenue', category: 'quotes', urgency: 'overdue', points: 150 },
+        { text: 'Schedule — Ian (week of 17th or 24th)', category: 'admin', urgency: 'today', points: 30 },
+        { text: 'Schedule — 26 Evans Pass ~$7,500 + GST', category: 'quotes', urgency: 'week', points: 100 },
+        { text: 'Schedule — 28 McDonald St Ashburton', category: 'admin', urgency: 'week', points: 24 },
+
+        // INVOICES — 13 outstanding
+        { text: 'Invoice — Anita (32 Perthshire)', category: 'admin', urgency: 'overdue', points: 40 },
+        { text: 'Invoice — Tony (need email/address first)', category: 'admin', urgency: 'overdue', points: 40 },
+        { text: 'Invoice — Tim (Prestons)', category: 'admin', urgency: 'overdue', points: 40 },
+        { text: 'Invoice — Lynette', category: 'admin', urgency: 'overdue', points: 40 },
+        { text: 'Invoice — Sara', category: 'admin', urgency: 'overdue', points: 40 },
+        { text: 'Invoice — Diane (Idris Rd)', category: 'admin', urgency: 'overdue', points: 40 },
+        { text: 'Invoice — James Keir', category: 'admin', urgency: 'overdue', points: 40 },
+        { text: 'Invoice — Brittany', category: 'admin', urgency: 'overdue', points: 40 },
+        { text: 'Invoice — Jayden', category: 'admin', urgency: 'overdue', points: 40 },
+        { text: 'Invoice — Christeen Flynn', category: 'admin', urgency: 'overdue', points: 40 },
+        { text: 'Invoice — 115 Clarendon', category: 'admin', urgency: 'overdue', points: 40 },
+        { text: 'Invoice — 4 Candlesticks', category: 'admin', urgency: 'overdue', points: 40 },
+        { text: 'Invoice — Harrison (confirm done first)', category: 'admin', urgency: 'today', points: 30 },
+
+        // COLLECTIONS
+        { text: 'Chase payment — Robin (retry)', category: 'admin', urgency: 'overdue', points: 40 },
+        { text: 'Chase payment — Amanda / Brendon (retry)', category: 'admin', urgency: 'overdue', points: 40 },
+        { text: 'Confirm collected — Riika, Beau, Harrison', category: 'admin', urgency: 'today', points: 30 },
+
+        // CALLS / FOLLOW-UPS
+        { text: 'Call Shane', category: 'admin', urgency: 'today', points: 30 },
+        { text: 'Call Abraham', category: 'admin', urgency: 'today', points: 30 },
+        { text: 'Call Carla', category: 'admin', urgency: 'today', points: 30 },
+        { text: 'Call Tim — Locator Services', category: 'admin', urgency: 'week', points: 24 },
+        { text: 'Call Kathy — commercial', category: 'admin', urgency: 'week', points: 24 },
+        { text: 'Call Penny', category: 'admin', urgency: 'week', points: 24 },
+        { text: 'Call Johanna', category: 'admin', urgency: 'week', points: 24 },
+        { text: 'Call 027 849 3293', category: 'admin', urgency: 'week', points: 24 },
+        { text: 'Call +64 22 079 1309', category: 'admin', urgency: 'week', points: 24 },
+        { text: 'Call Ger — retry', category: 'admin', urgency: 'today', points: 30 },
+        { text: 'Call Charlotte — retry', category: 'admin', urgency: 'week', points: 24 },
+        { text: 'Call Mike King — confirm property', category: 'admin', urgency: 'week', points: 24 },
+        { text: 'Reply — 123a Hackthorne', category: 'admin', urgency: 'week', points: 24 },
+        { text: 'Drive-by — 188 Jacksons Rd', category: 'site-visits', urgency: 'week', points: 48 },
+        { text: 'Confirm Lynette Telford + Tee follow-ups landed', category: 'admin', urgency: 'week', points: 24 },
+
+        // PLANNING SESSIONS
+        { text: 'Planning — Ger $19k deck (biggest job, no plan)', category: 'quotes', urgency: 'overdue', points: 100 },
+        { text: 'Planning — Vanessa Seath, 2/133 Blighs Rd', category: 'quotes', urgency: 'week', points: 60 },
+        { text: 'Planning — Shenbo 35 Breens (plan + plant order + return shovel)', category: 'quotes', urgency: 'week', points: 60 },
+        { text: 'Planning — Amanda & Brendon', category: 'quotes', urgency: 'week', points: 60 },
+        { text: "Planning — Robyn's property", category: 'quotes', urgency: 'week', points: 60 },
+        { text: 'Planning — 153 Estuary Rd (Ally Morris) both houses', category: 'quotes', urgency: 'week', points: 60 },
+        { text: 'Planning — 9 Parkridge, set into maintenance', category: 'admin', urgency: 'week', points: 24 },
+        { text: 'Planning — 5 Merivale Lane maintenance schedule', category: 'admin', urgency: 'week', points: 24 },
+        { text: 'Planning — 53 Major Aitken maintenance frequency', category: 'admin', urgency: 'week', points: 24 },
+        { text: 'Performance reviews — block out Wednesday', category: 'employment', urgency: 'week', points: 36 },
+
+        // SITE VISITS / JOBS THIS WEEK
+        { text: 'Job — 5 Merivale Lane maintenance', category: 'site-visits', urgency: 'week', points: 48 },
+        { text: 'Job — 53 Major Aitken maintenance', category: 'site-visits', urgency: 'week', points: 48 },
+        { text: 'Job — 54B Glandovey — mow, trim, planting plan', category: 'site-visits', urgency: 'week', points: 48 },
+        { text: 'Job — 140 Rutland irrigation', category: 'site-visits', urgency: 'week', points: 48 },
+
+        // ADMIN
+        { text: 'Techcare — laptop', category: 'admin', urgency: 'week', points: 24 },
+        { text: "Read Jason's landscaping plan", category: 'admin', urgency: 'today', points: 30 },
+        { text: 'Organise boxing with Jabe (work)', category: 'other', urgency: 'week', points: 18 },
+        { text: '18 Matai Springs Drive — Instagram DMs design', category: 'admin', urgency: 'week', points: 24 },
+
+        // UPCOMING
+        { text: 'Brian — 32 Greenpark drainage pipe', category: 'site-visits', urgency: 'none', points: 40 },
+        { text: 'Dion — 67A Aldwins (Jeremy lawn 2-3 wks)', category: 'site-visits', urgency: 'none', points: 40 },
+        { text: '173 Hoonhay (Jeremy lawn 2-3 wks)', category: 'site-visits', urgency: 'none', points: 40 },
+        { text: "Shenbo's planting + landscaping", category: 'site-visits', urgency: 'none', points: 40 },
+
+        // OLD — CHECK IF STILL ALIVE
+        { text: 'Check — 20 Blackison St (was 24 March) dead or alive?', category: 'admin', urgency: 'week', points: 24 },
+        { text: 'Check — Katrina Oxford white stones (deadline passed) dead or alive?', category: 'admin', urgency: 'week', points: 24 },
+        { text: 'Check — Jonathan Lincoln quote still waiting?', category: 'admin', urgency: 'week', points: 24 },
+    ];
+
+    const now = Date.now();
+    seed.forEach((t, i) => {
+        state.tasks.push({
+            id: now + i,
+            text: t.text,
+            category: t.category,
+            urgency: t.urgency,
+            points: t.points,
+            done: false,
+            created: todayStr(),
+            completedAt: null
+        });
+    });
+
+    state.todayTasks = seed.length;
+    localStorage.setItem('planner_seeded', 'true');
+    save();
+}
+
+// Init
+updateProfileBadge();
+checkDay();
+ensureHabits();
+checkTomorrowPlan();
+seedTasks();
+render();
+// Restore active bet timer if one exists
+if (state.activeBet) startBetTimer();
+</script>
+</body>
+</html>
