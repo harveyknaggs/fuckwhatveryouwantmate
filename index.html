@@ -638,7 +638,8 @@ function checkDay() {
                 completed: state.completedToday,
                 level: lvl.level,
                 title: lvl.title,
-                beatHouse: state.todayScore >= DAILY_TARGET
+                beatHouse: state.todayScore >= DAILY_TARGET,
+                completedHabits: state.completedHabitsToday || []
             };
         }
         // Streak
@@ -647,6 +648,7 @@ function checkDay() {
         else if (state.lastActiveDate !== today) { state.streak = 1; }
         state.todayScore = 0; state.todayTasks = 0; state.completedToday = 0;
         state.todayDate = today; state.combo = 0; state.bonusActive = false;
+        state.completedHabitsToday = [];
         // Clear completed tasks from previous days
         state.tasks = state.tasks.filter(t => !t.done);
         // Add daily habits
@@ -678,6 +680,29 @@ function addDailyHabits() {
             isHabit: true
         });
     });
+}
+
+// Habit streak tracking
+function getHabitStreak(habitText) {
+    // Check how many consecutive days this habit was completed
+    const dates = Object.keys(state.history).sort().reverse();
+    let streak = 0;
+    for (const date of dates) {
+        const dayData = state.history[date];
+        if (dayData.completedHabits && dayData.completedHabits.includes(habitText)) {
+            streak++;
+        } else {
+            break;
+        }
+    }
+    return streak;
+}
+
+function getHabitMultiplier(habitText) {
+    const streak = getHabitStreak(habitText);
+    if (streak >= 7) return 3;   // 7+ day streak = 3x
+    if (streak >= 3) return 2;   // 3+ day streak = 2x
+    return 1;
 }
 
 // Seed habits on first load if none exist today
@@ -885,6 +910,15 @@ function completeTask(id) {
 
     let points = Math.round(task.points * multiplier);
 
+    // Habit streak multiplier
+    if (task.isHabit) {
+        const habitMulti = getHabitMultiplier(task.text);
+        if (habitMulti > 1) {
+            points = Math.round(points * habitMulti);
+            multiText += '🔥 ' + habitMulti + 'x STREAK ';
+        }
+    }
+
     // Check bet
     points = checkBetWin(id, points);
     if (state.activeBet && state.activeBet.taskId === id) {
@@ -893,6 +927,14 @@ function completeTask(id) {
 
     task.done = true;
     task.completedAt = new Date().toISOString();
+
+    // Track completed habits for streak
+    if (task.isHabit) {
+        if (!state.completedHabitsToday) state.completedHabitsToday = [];
+        if (!state.completedHabitsToday.includes(task.text)) {
+            state.completedHabitsToday.push(task.text);
+        }
+    }
     state.todayScore += points;
     state.totalXP += points;
     state.completedToday++;
@@ -1189,7 +1231,8 @@ function render() {
             </div>
             <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0">
                 <div class="task-points">${t.done ? '✓' : '+' + t.points}</div>
-                ${!t.done && !state.activeBet ? '<button onclick="openBetPanel(' + t.id + ')" style="background:linear-gradient(135deg,var(--red),#cc0000);border:none;border-radius:8px;padding:2px 8px;font-size:0.6rem;color:#fff;font-weight:700;cursor:pointer;font-family:Orbitron,monospace;letter-spacing:0.5px">BET</button>' : ''}
+                ${!t.done && !state.activeBet && t.category !== 'habits' ? '<button onclick="openBetPanel(' + t.id + ')" style="background:linear-gradient(135deg,var(--red),#cc0000);border:none;border-radius:8px;padding:2px 8px;font-size:0.6rem;color:#fff;font-weight:700;cursor:pointer;font-family:Orbitron,monospace;letter-spacing:0.5px">BET</button>' : ''}
+                ${t.isHabit && !t.done && getHabitStreak(t.text) >= 3 ? '<div style="font-size:0.55rem;color:#ff6d00;font-family:Orbitron,monospace">🔥' + getHabitStreak(t.text) + 'd 2x</div>' : ''}
             </div>
             <button class="task-delete" onclick="deleteTask(${t.id})">×</button>
         </div>`;
