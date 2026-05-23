@@ -525,7 +525,7 @@
             <div id="sessionFormFull" style="display:none">
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
                     <div><label style="font-size:0.65rem;color:var(--text2)">Date</label><input type="date" id="sessDate" class="limits-input"></div>
-                    <div><label style="font-size:0.65rem;color:var(--text2)">Type / Venue</label><input type="text" id="sessVenue" class="limits-input" placeholder="e.g. TAB, pokies, online"></div>
+                    <div><label style="font-size:0.65rem;color:var(--text2)">Type / Venue</label><select id="sessVenue" class="limits-input"><option value="Pub">Pub</option><option value="Poker">Poker</option><option value="Online">Online</option><option value="TAB">TAB</option><option value="Bet">Bet</option><option value="Other">Other</option></select></div>
                     <div><label style="font-size:0.65rem;color:var(--text2)">Time spent (mins)</label><input type="number" id="sessTime" class="limits-input" placeholder="0"></div>
                     <div><label style="font-size:0.65rem;color:var(--text2)">Amount staked ($)</label><input type="number" id="sessStaked" class="limits-input" step="0.01" placeholder="0"></div>
                     <div><label style="font-size:0.65rem;color:var(--text2)">Amount returned ($)</label><input type="number" id="sessReturned" class="limits-input" step="0.01" placeholder="0"></div>
