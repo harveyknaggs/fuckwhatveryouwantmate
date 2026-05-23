@@ -526,10 +526,18 @@
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
                     <div><label style="font-size:0.65rem;color:var(--text2)">Date</label><input type="date" id="sessDate" class="limits-input"></div>
                     <div><label style="font-size:0.65rem;color:var(--text2)">Type / Venue</label><select id="sessVenue" class="limits-input"><option value="Pub">Pub</option><option value="Poker">Poker</option><option value="Online">Online</option><option value="TAB">TAB</option><option value="Bet">Bet</option><option value="Other">Other</option></select></div>
-                    <div><label style="font-size:0.65rem;color:var(--text2)">Time spent (mins)</label><input type="number" id="sessTime" class="limits-input" placeholder="0"></div>
-                    <div><label style="font-size:0.65rem;color:var(--text2)">Amount staked ($)</label><input type="number" id="sessStaked" class="limits-input" step="0.01" placeholder="0"></div>
-                    <div><label style="font-size:0.65rem;color:var(--text2)">Amount returned ($)</label><input type="number" id="sessReturned" class="limits-input" step="0.01" placeholder="0"></div>
-                    <div><label style="font-size:0.65rem;color:var(--text2)">Max balance hit ($)</label><input type="number" id="sessMaxBal" class="limits-input" step="0.01" placeholder="Highest point in session"></div>
+                    <div style="grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:8px;background:var(--bg);border-radius:8px;padding:8px;border:1px solid var(--border)">
+                        <div style="grid-column:1/-1;font-size:0.65rem;color:var(--gold);text-transform:uppercase;letter-spacing:0.5px">Expected (before)</div>
+                        <div><label style="font-size:0.65rem;color:var(--text2)">Budget allowed ($)</label><input type="number" id="sessBudget" class="limits-input" step="0.01" placeholder="0"></div>
+                        <div><label style="font-size:0.65rem;color:var(--text2)">Time expected (mins)</label><input type="number" id="sessTimeExpected" class="limits-input" placeholder="0"></div>
+                    </div>
+                    <div style="grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:8px;background:var(--bg);border-radius:8px;padding:8px;border:1px solid var(--border)">
+                        <div style="grid-column:1/-1;font-size:0.65rem;color:var(--neon-green);text-transform:uppercase;letter-spacing:0.5px">Actual (after)</div>
+                        <div><label style="font-size:0.65rem;color:var(--text2)">Amount staked ($)</label><input type="number" id="sessStaked" class="limits-input" step="0.01" placeholder="0"></div>
+                        <div><label style="font-size:0.65rem;color:var(--text2)">Amount returned ($)</label><input type="number" id="sessReturned" class="limits-input" step="0.01" placeholder="0"></div>
+                        <div><label style="font-size:0.65rem;color:var(--text2)">Time spent (mins)</label><input type="number" id="sessTime" class="limits-input" placeholder="0"></div>
+                        <div><label style="font-size:0.65rem;color:var(--text2)">Max balance hit ($)</label><input type="number" id="sessMaxBal" class="limits-input" step="0.01" placeholder="0"></div>
+                    </div>
                 </div>
                 <div style="margin-bottom:8px">
                     <label style="font-size:0.65rem;color:var(--text2)">How I felt before</label>
@@ -2298,11 +2306,15 @@ function saveSession() {
     });
 
     const maxBal = parseFloat(document.getElementById('sessMaxBal').value) || 0;
+    const budget = parseFloat(document.getElementById('sessBudget').value) || 0;
+    const timeExpected = parseInt(document.getElementById('sessTimeExpected').value) || 0;
 
     gamb.sessions.push({
         id: Date.now(),
         date: document.getElementById('sessDate').value,
         venue: document.getElementById('sessVenue').value || 'Unknown',
+        budget: budget,
+        timeExpected: timeExpected,
         time: time,
         staked: staked,
         returned: returned,
@@ -2324,6 +2336,8 @@ function saveSession() {
     document.getElementById('sessStaked').value = '';
     document.getElementById('sessReturned').value = '';
     document.getElementById('sessMaxBal').value = '';
+    document.getElementById('sessBudget').value = '';
+    document.getElementById('sessTimeExpected').value = '';
     document.getElementById('sessBefore').value = '';
     document.getElementById('sessAfter').value = '';
 
@@ -2468,12 +2482,14 @@ function renderLimits() {
                     '<div><span style="font-weight:600">' + s.date + '</span> · <span style="color:var(--text2)">' + s.venue + '</span></div>' +
                     '<button onclick="deleteSession(' + s.id + ')" style="background:none;border:none;color:var(--text2);cursor:pointer;font-size:0.8rem">×</button>' +
                 '</div>' +
-                '<div style="display:flex;gap:12px;margin-top:4px;font-size:0.75rem">' +
-                    '<span style="color:var(--text2)">Staked: $' + s.staked.toFixed(2) + '</span>' +
-                    '<span style="color:var(--text2)">Returned: $' + s.returned.toFixed(2) + '</span>' +
-                    '<span class="' + (net >= 0 ? 'session-net-pos' : 'session-net-neg') + '" style="font-weight:600">Net: ' + (net >= 0 ? '+' : '') + '$' + net.toFixed(2) + '</span>' +
-                    '<span style="color:var(--text2)">' + s.time + ' min</span>' +
-                    (s.maxBal ? '<span style="color:var(--text2)">Max: $' + s.maxBal.toFixed(2) + '</span>' : '') +
+                '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:6px;font-size:0.7rem">' +
+                    (s.budget ? '<div style="color:var(--text2)">Budget: $' + s.budget.toFixed(2) + '</div>' : '') +
+                    '<div style="color:var(--text2)">Staked: $' + s.staked.toFixed(2) + (s.budget ? ' <span style="color:' + (s.staked > s.budget ? 'var(--red)' : 'var(--neon-green)') + '">(' + (s.staked <= s.budget ? 'under' : 'over $' + (s.staked - s.budget).toFixed(2)) + ')</span>' : '') + '</div>' +
+                    (s.timeExpected ? '<div style="color:var(--text2)">Expected: ' + s.timeExpected + ' min</div>' : '') +
+                    '<div style="color:var(--text2)">Actual: ' + s.time + ' min' + (s.timeExpected ? ' <span style="color:' + (s.time > s.timeExpected ? 'var(--red)' : 'var(--neon-green)') + '">(' + (s.time <= s.timeExpected ? 'under' : '+' + (s.time - s.timeExpected) + 'min') + ')</span>' : '') + '</div>' +
+                    '<div style="color:var(--text2)">Returned: $' + s.returned.toFixed(2) + '</div>' +
+                    '<div class="' + (net >= 0 ? 'session-net-pos' : 'session-net-neg') + '" style="font-weight:600">Net: ' + (net >= 0 ? '+' : '') + '$' + net.toFixed(2) + '</div>' +
+                    (s.maxBal ? '<div style="color:var(--text2)">Max: $' + s.maxBal.toFixed(2) + '</div>' : '') +
                 '</div>' +
                 (s.before || s.after ? '<div style="margin-top:6px;font-size:0.7rem;color:var(--text2);border-top:1px solid var(--border);padding-top:6px">' +
                     (s.before ? '<div>Before: ' + s.before + '</div>' : '') +
