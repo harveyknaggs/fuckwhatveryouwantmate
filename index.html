@@ -144,6 +144,32 @@
         .page { display: none; }
         .page.active { display: block; }
 
+        /* ===== LIMITS PAGE ===== */
+        .limit-bar-wrap { background: var(--bg); border-radius: 8px; height: 18px; overflow: hidden; border: 1px solid var(--border); margin: 4px 0 8px; }
+        .limit-bar-fill { height: 100%; border-radius: 8px; transition: width 0.5s; }
+        .limit-bar-fill.ok { background: #334155; }
+        .limit-bar-fill.amber { background: #f59e0b; }
+        .limit-bar-fill.red { background: var(--red); }
+        .limit-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 8px; }
+        .limit-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; }
+        .limit-label { color: var(--text2); font-size: 0.7rem; }
+        .limit-value { font-family: 'Orbitron', monospace; font-size: 0.85rem; }
+        .exceeded-banner { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3); border-radius: 8px; padding: 10px 12px; font-size: 0.8rem; color: var(--text); margin-bottom: 8px; }
+        .session-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 6px; font-size: 0.8rem; }
+        .session-net-pos { color: var(--text); }
+        .session-net-neg { color: var(--red); }
+        .rule-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 0.8rem; }
+        .rule-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--text2); }
+        .limits-section { margin-bottom: 20px; }
+        .limits-section-title { font-size: 0.7rem; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .confirm-step { background: var(--bg2); border: 2px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+        .confirm-step.warning { border-color: var(--red); }
+        .limits-input { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; color: var(--text); font-size: 0.85rem; width: 100%; outline: none; }
+        .limits-input:focus { border-color: var(--text2); }
+        .limits-btn { padding: 10px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 0.8rem; font-weight: 600; width: 100%; }
+        .limits-btn-neutral { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+        .limits-btn-proceed { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); margin-top: 8px; }
+
         /* ===== BET OPTIONS ===== */
         .bet-option { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: center; cursor: pointer; transition: all 0.2s; }
         .bet-option:hover { border-color: var(--gold); box-shadow: 0 0 15px rgba(255,215,0,0.2); transform: scale(1.02); }
@@ -276,6 +302,7 @@
         <div class="nav-btn active" onclick="showPage('tasks',this)">Today</div>
         <div class="nav-btn" onclick="showPage('tomorrow',this)">Tomorrow</div>
         <div class="nav-btn" onclick="showPage('history',this)">History</div>
+        <div class="nav-btn" onclick="showPage('limits',this)">Limits</div>
         <div class="nav-btn" onclick="cashOut()">Cash Out</div>
     </div>
 
@@ -409,6 +436,98 @@
             <div class="history-bar" id="historyBar"></div>
         </div>
         <div id="historyStats" style="margin-top:24px"></div>
+    </div>
+
+    <!-- LIMITS PAGE -->
+    <div class="page" id="limitsPage">
+        <!-- All-time net -->
+        <div style="text-align:center;margin-bottom:16px">
+            <div style="font-size:0.7rem;color:var(--text2);text-transform:uppercase;letter-spacing:1px">All-Time Net Position</div>
+            <div style="font-family:'Orbitron',monospace;font-size:2.5rem;font-weight:900" id="gambAllTimeNet">$0</div>
+        </div>
+
+        <!-- Limit bars -->
+        <div class="limits-section">
+            <div class="limits-section-title">My Limits</div>
+            <div id="limitBars"></div>
+            <div id="exceededBanners"></div>
+            <button onclick="showEditLimits()" style="margin-top:6px;background:none;border:1px solid var(--border);border-radius:6px;padding:6px 12px;color:var(--text2);font-size:0.7rem;cursor:pointer">Edit Limits</button>
+
+            <!-- Edit limits form (hidden by default) -->
+            <div id="editLimitsForm" style="display:none;margin-top:10px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                    <div><label style="font-size:0.65rem;color:var(--text2)">Weekly spend cap ($)</label><input type="number" id="limWeekSpend" class="limits-input" step="1"></div>
+                    <div><label style="font-size:0.65rem;color:var(--text2)">Monthly spend cap ($)</label><input type="number" id="limMonthSpend" class="limits-input" step="1"></div>
+                    <div><label style="font-size:0.65rem;color:var(--text2)">Per session cap ($)</label><input type="number" id="limSessionSpend" class="limits-input" step="1"></div>
+                    <div><label style="font-size:0.65rem;color:var(--text2)">Weekly time cap (hrs)</label><input type="number" id="limWeekTime" class="limits-input" step="0.5"></div>
+                </div>
+                <button onclick="saveLimits()" class="limits-btn limits-btn-neutral" style="margin-top:8px">Save Limits</button>
+            </div>
+        </div>
+
+        <!-- Totals -->
+        <div class="limits-section">
+            <div class="limits-section-title">Totals</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px" id="gambTotals"></div>
+        </div>
+
+        <!-- Log session -->
+        <div class="limits-section">
+            <div class="limits-section-title">Log a Session</div>
+
+            <!-- Confirmation step -->
+            <div id="sessionConfirm" style="display:none"></div>
+
+            <!-- Session form -->
+            <div id="sessionForm">
+                <button onclick="startLogSession()" class="limits-btn limits-btn-neutral">+ Log a Session</button>
+            </div>
+
+            <!-- Actual form (hidden until confirmed) -->
+            <div id="sessionFormFull" style="display:none">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+                    <div><label style="font-size:0.65rem;color:var(--text2)">Date</label><input type="date" id="sessDate" class="limits-input"></div>
+                    <div><label style="font-size:0.65rem;color:var(--text2)">Type / Venue</label><input type="text" id="sessVenue" class="limits-input" placeholder="e.g. TAB, pokies, online"></div>
+                    <div><label style="font-size:0.65rem;color:var(--text2)">Time spent (mins)</label><input type="number" id="sessTime" class="limits-input" placeholder="0"></div>
+                    <div><label style="font-size:0.65rem;color:var(--text2)">Amount staked ($)</label><input type="number" id="sessStaked" class="limits-input" step="0.01" placeholder="0"></div>
+                    <div><label style="font-size:0.65rem;color:var(--text2)">Amount returned ($)</label><input type="number" id="sessReturned" class="limits-input" step="0.01" placeholder="0"></div>
+                </div>
+                <div style="margin-bottom:8px">
+                    <label style="font-size:0.65rem;color:var(--text2)">How I felt before</label>
+                    <textarea id="sessBefore" class="limits-input" rows="2" placeholder="e.g. bored, stressed, excited..." style="resize:none"></textarea>
+                </div>
+                <div style="margin-bottom:8px">
+                    <label style="font-size:0.65rem;color:var(--text2)">How I felt after</label>
+                    <textarea id="sessAfter" class="limits-input" rows="2" placeholder="e.g. regretful, fine, relieved I stopped..." style="resize:none"></textarea>
+                </div>
+
+                <!-- Rules check -->
+                <div style="margin-bottom:8px">
+                    <label style="font-size:0.65rem;color:var(--text2)">Rules I kept this session</label>
+                    <div id="sessionRulesCheck"></div>
+                </div>
+
+                <button onclick="saveSession()" class="limits-btn limits-btn-proceed">Log Session</button>
+                <button onclick="cancelSession()" style="margin-top:6px;background:none;border:none;color:var(--text2);font-size:0.75rem;cursor:pointer;width:100%;padding:6px">Cancel</button>
+            </div>
+        </div>
+
+        <!-- My Rules -->
+        <div class="limits-section">
+            <div class="limits-section-title">My Rules</div>
+            <div id="rulesList"></div>
+            <div style="display:flex;gap:6px;margin-top:8px">
+                <input type="text" id="newRuleInput" class="limits-input" placeholder="Add a rule..." style="flex:1">
+                <button onclick="addRule()" class="limits-btn limits-btn-neutral" style="width:auto;padding:8px 14px">+</button>
+            </div>
+            <div style="margin-top:8px;font-size:0.75rem;color:var(--text2)">Rules kept (30 days): <span id="rulesKeptPct" style="font-weight:600">—</span></div>
+        </div>
+
+        <!-- Session History -->
+        <div class="limits-section">
+            <div class="limits-section-title">Session History</div>
+            <div id="sessionHistory"></div>
+        </div>
     </div>
 </div>
 
@@ -1253,6 +1372,7 @@ function showPage(page, el) {
     if (el) el.classList.add('active');
     if (page === 'history') renderHistory();
     if (page === 'tomorrow') renderTomorrow();
+    if (page === 'limits') renderLimits();
 }
 
 function renderHistory() {
@@ -1947,6 +2067,279 @@ function seedTasks() {
     state.todayTasks = seed.length;
     localStorage.setItem('planner_seeded', 'true');
     save();
+}
+
+// ============================================================
+// GAMBLING LIMITS TRACKER
+// ============================================================
+let gamb = JSON.parse(localStorage.getItem('gamb_' + currentProfile) || 'null') || {
+    limits: { weekSpend: 100, monthSpend: 300, sessionSpend: 50, weekTime: 5 },
+    sessions: [],
+    rules: ['Stop at session cap', 'No chasing losses', 'No gambling after a loss day', 'Cool off if I hit weekly cap', 'No gambling when stressed or upset']
+};
+
+function saveGamb() { localStorage.setItem('gamb_' + currentProfile, JSON.stringify(gamb)); }
+
+function getWeekSessions() {
+    const weekStart = getWeekStartDate();
+    return gamb.sessions.filter(s => s.date >= weekStart);
+}
+
+function getMonthSessions() {
+    const monthStart = todayStr().substring(0, 7);
+    return gamb.sessions.filter(s => s.date.startsWith(monthStart));
+}
+
+function getWeekStartDate() {
+    const d = new Date();
+    const day = d.getDay();
+    d.setDate(d.getDate() - day + (day === 0 ? -6 : 1));
+    return d.toISOString().split('T')[0];
+}
+
+function calcNet(sessions) {
+    return sessions.reduce((s, sess) => s + (sess.returned - sess.staked), 0);
+}
+
+function calcStaked(sessions) {
+    return sessions.reduce((s, sess) => s + sess.staked, 0);
+}
+
+function calcTime(sessions) {
+    return sessions.reduce((s, sess) => s + sess.time, 0);
+}
+
+function showEditLimits() {
+    const form = document.getElementById('editLimitsForm');
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    document.getElementById('limWeekSpend').value = gamb.limits.weekSpend;
+    document.getElementById('limMonthSpend').value = gamb.limits.monthSpend;
+    document.getElementById('limSessionSpend').value = gamb.limits.sessionSpend;
+    document.getElementById('limWeekTime').value = gamb.limits.weekTime;
+}
+
+function saveLimits() {
+    gamb.limits.weekSpend = parseFloat(document.getElementById('limWeekSpend').value) || 0;
+    gamb.limits.monthSpend = parseFloat(document.getElementById('limMonthSpend').value) || 0;
+    gamb.limits.sessionSpend = parseFloat(document.getElementById('limSessionSpend').value) || 0;
+    gamb.limits.weekTime = parseFloat(document.getElementById('limWeekTime').value) || 0;
+    saveGamb();
+    document.getElementById('editLimitsForm').style.display = 'none';
+    renderLimits();
+}
+
+function startLogSession() {
+    // Show confirmation step first
+    const weekSess = getWeekSessions();
+    const weekStaked = calcStaked(weekSess);
+    const weekTimeUsed = calcTime(weekSess) / 60;
+    const weekRemaining = gamb.limits.weekSpend - weekStaked;
+    const timeRemaining = gamb.limits.weekTime - weekTimeUsed;
+
+    const exceeded = weekRemaining <= 0 || timeRemaining <= 0;
+
+    let html = '<div class="confirm-step ' + (exceeded ? 'warning' : '') + '">';
+    html += '<div style="font-size:0.85rem;font-weight:600;color:var(--text);margin-bottom:8px">Before you log this session:</div>';
+    html += '<div style="font-size:0.8rem;color:var(--text2);margin-bottom:4px">Weekly spend remaining: <span style="color:' + (weekRemaining <= 0 ? 'var(--red)' : 'var(--text)') + ';font-weight:600">$' + Math.max(0, weekRemaining).toFixed(2) + '</span></div>';
+    html += '<div style="font-size:0.8rem;color:var(--text2);margin-bottom:8px">Weekly time remaining: <span style="color:' + (timeRemaining <= 0 ? 'var(--red)' : 'var(--text)') + ';font-weight:600">' + Math.max(0, timeRemaining).toFixed(1) + ' hrs</span></div>';
+
+    if (exceeded) {
+        html += '<div style="font-size:0.8rem;color:var(--red);margin-bottom:8px">You have already exceeded a limit this week.</div>';
+    }
+
+    html += '<button onclick="proceedToForm()" class="limits-btn limits-btn-proceed">I understand — proceed to log</button>';
+    html += '<button onclick="cancelSession()" style="margin-top:6px;background:none;border:none;color:var(--text2);font-size:0.75rem;cursor:pointer;width:100%;padding:6px">Cancel</button>';
+    html += '</div>';
+
+    document.getElementById('sessionConfirm').innerHTML = html;
+    document.getElementById('sessionConfirm').style.display = 'block';
+    document.getElementById('sessionForm').style.display = 'none';
+}
+
+function proceedToForm() {
+    document.getElementById('sessionConfirm').style.display = 'none';
+    document.getElementById('sessionFormFull').style.display = 'block';
+    document.getElementById('sessDate').value = todayStr();
+
+    // Render rules checkboxes
+    const html = gamb.rules.map((r, i) =>
+        '<div class="rule-item"><input type="checkbox" id="sessRule' + i + '" checked><label for="sessRule' + i + '" style="cursor:pointer">' + r + '</label></div>'
+    ).join('');
+    document.getElementById('sessionRulesCheck').innerHTML = html;
+}
+
+function cancelSession() {
+    document.getElementById('sessionConfirm').style.display = 'none';
+    document.getElementById('sessionFormFull').style.display = 'none';
+    document.getElementById('sessionForm').style.display = 'block';
+}
+
+function saveSession() {
+    const staked = parseFloat(document.getElementById('sessStaked').value) || 0;
+    const returned = parseFloat(document.getElementById('sessReturned').value) || 0;
+    const time = parseInt(document.getElementById('sessTime').value) || 0;
+
+    if (staked === 0 && time === 0) { alert('Enter at least a stake or time'); return; }
+
+    const rulesKept = [];
+    gamb.rules.forEach((r, i) => {
+        if (document.getElementById('sessRule' + i).checked) rulesKept.push(r);
+    });
+
+    gamb.sessions.push({
+        id: Date.now(),
+        date: document.getElementById('sessDate').value,
+        venue: document.getElementById('sessVenue').value || 'Unknown',
+        time: time,
+        staked: staked,
+        returned: returned,
+        net: returned - staked,
+        before: document.getElementById('sessBefore').value,
+        after: document.getElementById('sessAfter').value,
+        rulesKept: rulesKept,
+        rulesTotal: gamb.rules.length
+    });
+
+    saveGamb();
+    cancelSession();
+
+    // Clear form
+    document.getElementById('sessVenue').value = '';
+    document.getElementById('sessTime').value = '';
+    document.getElementById('sessStaked').value = '';
+    document.getElementById('sessReturned').value = '';
+    document.getElementById('sessBefore').value = '';
+    document.getElementById('sessAfter').value = '';
+
+    renderLimits();
+}
+
+function deleteSession(id) {
+    gamb.sessions = gamb.sessions.filter(s => s.id !== id);
+    saveGamb();
+    renderLimits();
+}
+
+function addRule() {
+    const input = document.getElementById('newRuleInput');
+    const text = input.value.trim();
+    if (!text) return;
+    gamb.rules.push(text);
+    saveGamb();
+    input.value = '';
+    renderLimits();
+}
+
+function removeRule(idx) {
+    gamb.rules.splice(idx, 1);
+    saveGamb();
+    renderLimits();
+}
+
+function renderLimits() {
+    const weekSess = getWeekSessions();
+    const monthSess = getMonthSessions();
+    const allSess = gamb.sessions;
+
+    const weekStaked = calcStaked(weekSess);
+    const monthStaked = calcStaked(monthSess);
+    const weekTimeHrs = calcTime(weekSess) / 60;
+    const monthTimeHrs = calcTime(monthSess) / 60;
+
+    const weekNet = calcNet(weekSess);
+    const monthNet = calcNet(monthSess);
+    const allTimeNet = calcNet(allSess);
+
+    // All-time net
+    const netEl = document.getElementById('gambAllTimeNet');
+    netEl.textContent = (allTimeNet >= 0 ? '+$' : '-$') + Math.abs(allTimeNet).toFixed(2);
+    netEl.style.color = allTimeNet >= 0 ? 'var(--text)' : 'var(--red)';
+
+    // Limit bars
+    const limits = [
+        { label: 'Weekly Spend', used: weekStaked, cap: gamb.limits.weekSpend, unit: '$' },
+        { label: 'Monthly Spend', used: monthStaked, cap: gamb.limits.monthSpend, unit: '$' },
+        { label: 'Weekly Time', used: weekTimeHrs, cap: gamb.limits.weekTime, unit: 'hrs' },
+    ];
+
+    let barsHtml = '';
+    let bannersHtml = '';
+
+    limits.forEach(l => {
+        const pct = l.cap > 0 ? (l.used / l.cap) * 100 : 0;
+        const colorClass = pct >= 100 ? 'red' : pct >= 75 ? 'amber' : 'ok';
+        barsHtml += '<div class="limit-card">';
+        barsHtml += '<div class="limit-header"><span class="limit-label">' + l.label + '</span><span class="limit-value" style="color:' + (pct >= 100 ? 'var(--red)' : 'var(--text)') + '">' + (l.unit === '$' ? '$' : '') + l.used.toFixed(l.unit === '$' ? 2 : 1) + (l.unit !== '$' ? ' hrs' : '') + ' / ' + (l.unit === '$' ? '$' : '') + l.cap + (l.unit !== '$' ? ' hrs' : '') + '</span></div>';
+        barsHtml += '<div class="limit-bar-wrap"><div class="limit-bar-fill ' + colorClass + '" style="width:' + Math.min(100, pct) + '%"></div></div>';
+        barsHtml += '</div>';
+
+        if (pct >= 100) {
+            const over = l.used - l.cap;
+            bannersHtml += '<div class="exceeded-banner">' + l.label + ' limit exceeded by ' + (l.unit === '$' ? '$' : '') + over.toFixed(l.unit === '$' ? 2 : 1) + (l.unit !== '$' ? ' hrs' : '') + '.</div>';
+        }
+    });
+
+    document.getElementById('limitBars').innerHTML = barsHtml;
+    document.getElementById('exceededBanners').innerHTML = bannersHtml;
+
+    // Totals
+    document.getElementById('gambTotals').innerHTML = `
+        <div class="limit-card" style="text-align:center">
+            <div class="limit-label">This Week</div>
+            <div class="limit-value" style="color:${weekNet >= 0 ? 'var(--text)' : 'var(--red)'}">${weekNet >= 0 ? '+' : ''}$${weekNet.toFixed(2)}</div>
+        </div>
+        <div class="limit-card" style="text-align:center">
+            <div class="limit-label">This Month</div>
+            <div class="limit-value" style="color:${monthNet >= 0 ? 'var(--text)' : 'var(--red)'}">${monthNet >= 0 ? '+' : ''}$${monthNet.toFixed(2)}</div>
+        </div>
+        <div class="limit-card" style="text-align:center">
+            <div class="limit-label">Hours This Month</div>
+            <div class="limit-value">${monthTimeHrs.toFixed(1)}</div>
+        </div>
+    `;
+
+    // Rules
+    document.getElementById('rulesList').innerHTML = gamb.rules.map((r, i) =>
+        '<div class="rule-item"><span style="flex:1">' + r + '</span><button onclick="removeRule(' + i + ')" style="background:none;border:none;color:var(--text2);cursor:pointer;font-size:0.8rem">×</button></div>'
+    ).join('') || '<div style="font-size:0.8rem;color:var(--text2);padding:8px 0">No rules set yet</div>';
+
+    // Rules kept percentage (last 30 days)
+    const last30 = allSess.filter(s => {
+        const d = new Date(s.date);
+        return (Date.now() - d.getTime()) < 30 * 86400000;
+    });
+    if (last30.length > 0) {
+        const totalRulesKept = last30.reduce((s, sess) => s + (sess.rulesKept ? sess.rulesKept.length : 0), 0);
+        const totalRulesPossible = last30.reduce((s, sess) => s + (sess.rulesTotal || gamb.rules.length), 0);
+        const pct = totalRulesPossible > 0 ? Math.round((totalRulesKept / totalRulesPossible) * 100) : 0;
+        document.getElementById('rulesKeptPct').textContent = pct + '%';
+        document.getElementById('rulesKeptPct').style.color = pct >= 80 ? 'var(--text)' : pct >= 50 ? '#f59e0b' : 'var(--red)';
+    }
+
+    // Session history
+    const sorted = [...allSess].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+    document.getElementById('sessionHistory').innerHTML = sorted.length === 0
+        ? '<div style="text-align:center;padding:16px;color:var(--text2);font-size:0.8rem">No sessions logged</div>'
+        : sorted.map(s => {
+            const net = s.returned - s.staked;
+            return '<div class="session-card">' +
+                '<div style="display:flex;justify-content:space-between;align-items:center">' +
+                    '<div><span style="font-weight:600">' + s.date + '</span> · <span style="color:var(--text2)">' + s.venue + '</span></div>' +
+                    '<button onclick="deleteSession(' + s.id + ')" style="background:none;border:none;color:var(--text2);cursor:pointer;font-size:0.8rem">×</button>' +
+                '</div>' +
+                '<div style="display:flex;gap:12px;margin-top:4px;font-size:0.75rem">' +
+                    '<span style="color:var(--text2)">Staked: $' + s.staked.toFixed(2) + '</span>' +
+                    '<span style="color:var(--text2)">Returned: $' + s.returned.toFixed(2) + '</span>' +
+                    '<span class="' + (net >= 0 ? 'session-net-pos' : 'session-net-neg') + '" style="font-weight:600">Net: ' + (net >= 0 ? '+' : '') + '$' + net.toFixed(2) + '</span>' +
+                    '<span style="color:var(--text2)">' + s.time + ' min</span>' +
+                '</div>' +
+                (s.before || s.after ? '<div style="margin-top:6px;font-size:0.7rem;color:var(--text2);border-top:1px solid var(--border);padding-top:6px">' +
+                    (s.before ? '<div>Before: ' + s.before + '</div>' : '') +
+                    (s.after ? '<div>After: ' + s.after + '</div>' : '') +
+                '</div>' : '') +
+                (s.rulesKept ? '<div style="margin-top:4px;font-size:0.65rem;color:var(--text2)">Rules kept: ' + s.rulesKept.length + '/' + (s.rulesTotal || gamb.rules.length) + '</div>' : '') +
+            '</div>';
+        }).join('');
 }
 
 // Init
