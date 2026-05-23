@@ -302,7 +302,7 @@
         <div class="nav-btn active" onclick="showPage('tasks',this)">Today</div>
         <div class="nav-btn" onclick="showPage('tomorrow',this)">Tomorrow</div>
         <div class="nav-btn" onclick="showPage('history',this)">History</div>
-        <div class="nav-btn" onclick="showPage('limits',this)">Limits</div>
+        <div class="nav-btn" id="limitsNavBtn" onclick="showPage('limits',this)">Limits</div>
         <div class="nav-btn" onclick="cashOut()">Cash Out</div>
     </div>
 
@@ -649,6 +649,9 @@ function updateProfileBadge() {
     badge.style.background = profile.color + '22';
     badge.style.color = profile.color;
     badge.style.borderColor = profile.color + '44';
+    // Hide limits tab for Jess
+    const limitsBtn = document.getElementById('limitsNavBtn');
+    if (limitsBtn) limitsBtn.style.display = currentProfile === 'jess' ? 'none' : 'flex';
 }
 
 function save() {
