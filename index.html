@@ -440,11 +440,8 @@
 
     <!-- LIMITS PAGE -->
     <div class="page" id="limitsPage">
-        <!-- All-time net -->
-        <div style="text-align:center;margin-bottom:16px">
-            <div style="font-size:0.7rem;color:var(--text2);text-transform:uppercase;letter-spacing:1px">All-Time Net Position</div>
-            <div style="font-family:'Orbitron',monospace;font-size:2.5rem;font-weight:900" id="gambAllTimeNet">$0</div>
-        </div>
+        <!-- All-time net (rendered inside benchmarks) -->
+        <div id="gambAllTimeNet" style="display:none"></div>
 
         <!-- Limit bars (hidden for now — tracking only for first month) -->
         <div class="limits-section" id="limitBarsSection" style="display:none">
@@ -2300,7 +2297,13 @@ function renderLimits() {
     const totalWagered = allSess.reduce((s, sess) => s + sess.staked, 0);
     const totalPotentialWin = allSess.reduce((s, sess) => s + (sess.potentialWin || 0), 0);
 
+    const totalTimeAllHrs = calcTime(allSess) / 60;
+
     document.getElementById('gambBenchmarks').innerHTML = `
+        <div class="limit-card" style="text-align:center">
+            <div class="limit-label">Total Spent</div>
+            <div style="font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;color:${allTimeNet >= 0 ? 'var(--text)' : 'var(--red)'}">${allTimeNet >= 0 ? '+' : '-'}$${Math.abs(allTimeNet).toFixed(2)}</div>
+        </div>
         <div class="limit-card" style="text-align:center">
             <div class="limit-label">Total Wagered</div>
             <div class="limit-value" style="color:var(--text)">$${totalWagered.toFixed(2)}</div>
@@ -2308,7 +2311,10 @@ function renderLimits() {
         <div class="limit-card" style="text-align:center">
             <div class="limit-label">Left On Table</div>
             <div class="limit-value" style="color:var(--text2)">$${totalPotentialWin.toFixed(2)}</div>
-            <div style="font-size:0.6rem;color:var(--text2);margin-top:2px">Could have won if cashed out at max</div>
+        </div>
+        <div class="limit-card" style="text-align:center">
+            <div class="limit-label">Total Hours</div>
+            <div class="limit-value" style="color:var(--text2)">${totalTimeAllHrs.toFixed(1)} hrs</div>
         </div>
     `;
 
