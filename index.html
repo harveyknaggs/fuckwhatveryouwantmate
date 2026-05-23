@@ -33,7 +33,7 @@
         .level-badge { font-family: 'Orbitron', monospace; font-size: 0.7rem; background: linear-gradient(135deg, var(--gold), var(--gold2)); color: #000; padding: 2px 8px; border-radius: 4px; font-weight: 700; }
 
         /* ===== MAIN ===== */
-        .main { padding: 80px 12px 100px; max-width: 500px; margin: 0 auto; }
+        .main { padding: 80px 12px 120px; max-width: 500px; margin: 0 auto; }
 
         /* ===== SCORE DISPLAY ===== */
         .score-display { text-align: center; margin-bottom: 16px; }
@@ -233,7 +233,7 @@
         /* ===== MOBILE OPTIMISATION ===== */
         @media (max-width: 500px) {
             .topbar { padding: 6px 12px; padding-top: env(safe-area-inset-top, 6px); }
-            .main { padding: 78px 10px 90px; }
+            .main { padding: 78px 10px 110px; }
             .score-number { font-size: 2.5rem; }
             .nav-row { gap: 4px; }
             .nav-btn { padding: 8px 6px; font-size: 0.7rem; }
@@ -1422,7 +1422,8 @@ function render() {
     // Filter tasks
     const active = state.tasks.filter(t => !t.done);
     const done = state.tasks.filter(t => t.done);
-    let filtered = currentFilter === 'all' ? [...active, ...done] : [...active.filter(t => t.category === currentFilter), ...done.filter(t => t.category === currentFilter)];
+    // Only show active tasks by default — done tasks hidden to keep list short
+    let filtered = currentFilter === 'all' ? [...active] : [...active.filter(t => t.category === currentFilter)];
 
     // Counts
     document.getElementById('countAll').textContent = active.length;
