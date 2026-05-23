@@ -1532,7 +1532,7 @@ function showPage(page, el) {
     if (el) el.classList.add('active');
     if (page === 'history') renderHistory();
     if (page === 'tomorrow') renderTomorrow();
-    if (page === 'limits') renderLimits();
+    if (page === 'limits') { migrateRules(); renderLimits(); }
     if (page === 'ugc') renderUgc();
 }
 
