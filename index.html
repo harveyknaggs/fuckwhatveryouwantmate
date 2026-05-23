@@ -138,8 +138,9 @@
         .history-container { position: relative; height: 120px; margin-top: 8px; }
 
         /* ===== NAV ===== */
-        .nav-row { display: flex; gap: 6px; margin-bottom: 12px; }
-        .nav-btn { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg2); color: var(--text2); font-size: 0.75rem; font-weight: 600; cursor: pointer; text-align: center; transition: all 0.2s; }
+        .nav-row { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        .nav-row::-webkit-scrollbar { display: none; }
+        .nav-btn { flex-shrink: 0; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg2); color: var(--text2); font-size: 0.75rem; font-weight: 600; cursor: pointer; text-align: center; transition: all 0.2s; white-space: nowrap; }
         .nav-btn.active { background: var(--bg3); color: var(--gold); border-color: var(--gold); }
         .page { display: none; }
         .page.active { display: block; }
