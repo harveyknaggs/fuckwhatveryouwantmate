@@ -170,6 +170,35 @@
         .limits-btn-neutral { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
         .limits-btn-proceed { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); margin-top: 8px; }
 
+        /* ===== UGC TRACKER ===== */
+        .ugc-stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+        .ugc-stat { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 10px; text-align: center; }
+        .ugc-stat .us-label { font-size: 0.6rem; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; }
+        .ugc-stat .us-value { font-family: 'Orbitron', monospace; font-size: 1.1rem; font-weight: 700; margin-top: 2px; }
+        .ugc-due-soon { background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.3); border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
+        .ugc-due-item { font-size: 0.8rem; padding: 4px 0; display: flex; justify-content: space-between; }
+        .deal-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 8px; }
+        .deal-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .deal-brand { font-size: 0.9rem; font-weight: 600; }
+        .deal-amount { font-family: 'Orbitron', monospace; font-size: 0.85rem; color: var(--gold); }
+        .deal-status { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .deal-status[data-s="lead"] { background: rgba(136,136,170,0.15); color: var(--text2); }
+        .deal-status[data-s="in-talks"] { background: rgba(0,212,255,0.15); color: var(--neon-blue); }
+        .deal-status[data-s="agreed"] { background: rgba(251,191,36,0.15); color: #fbbf24; }
+        .deal-status[data-s="in-progress"] { background: rgba(180,77,255,0.15); color: var(--neon-purple); }
+        .deal-status[data-s="submitted"] { background: rgba(0,255,136,0.15); color: var(--neon-green); }
+        .deal-status[data-s="paid"] { background: rgba(255,215,0,0.15); color: var(--gold); }
+        .deal-status[data-s="declined"] { background: rgba(248,113,113,0.15); color: var(--red); }
+        .deal-meta { font-size: 0.7rem; color: var(--text2); margin-top: 4px; }
+        .deal-deliverables { font-size: 0.75rem; color: var(--text); margin-top: 6px; padding: 6px 8px; background: var(--bg); border-radius: 6px; }
+        .deal-actions { display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; }
+        .deal-act-btn { padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg3); color: var(--text2); font-size: 0.65rem; cursor: pointer; }
+        .deal-act-btn:hover { border-color: var(--text2); color: var(--text); }
+        .ugc-form { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+        .ugc-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+        .ugc-form-full { margin-bottom: 8px; }
+        .ugc-filter-row { display: flex; gap: 4px; margin-bottom: 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
         /* ===== BET OPTIONS ===== */
         .bet-option { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: center; cursor: pointer; transition: all 0.2s; }
         .bet-option:hover { border-color: var(--gold); box-shadow: 0 0 15px rgba(255,215,0,0.2); transform: scale(1.02); }
@@ -303,6 +332,7 @@
         <div class="nav-btn" onclick="showPage('tomorrow',this)">Tomorrow</div>
         <div class="nav-btn" onclick="showPage('history',this)">History</div>
         <div class="nav-btn" id="limitsNavBtn" onclick="showPage('limits',this)">Limits</div>
+        <div class="nav-btn" id="ugcNavBtn" onclick="showPage('ugc',this)" style="display:none">UGC</div>
         <div class="nav-btn" onclick="cashOut()">Cash Out</div>
     </div>
 
@@ -534,6 +564,66 @@
     </div>
 </div>
 
+    <!-- UGC PAGE -->
+    <div class="page" id="ugcPage">
+        <!-- Stats -->
+        <div class="ugc-stat-grid" id="ugcStats"></div>
+
+        <!-- Due soon -->
+        <div id="ugcDueSoon"></div>
+
+        <!-- Filter -->
+        <div class="ugc-filter-row">
+            <div class="tab active" onclick="filterDeals('all',this)">All</div>
+            <div class="tab" onclick="filterDeals('lead',this)">Lead</div>
+            <div class="tab" onclick="filterDeals('in-talks',this)">In Talks</div>
+            <div class="tab" onclick="filterDeals('agreed',this)">Agreed</div>
+            <div class="tab" onclick="filterDeals('in-progress',this)">In Progress</div>
+            <div class="tab" onclick="filterDeals('submitted',this)">Submitted</div>
+            <div class="tab" onclick="filterDeals('paid',this)">Paid</div>
+        </div>
+
+        <!-- Sort -->
+        <div style="display:flex;gap:6px;margin-bottom:10px;font-size:0.7rem">
+            <span style="color:var(--text2)">Sort:</span>
+            <span onclick="sortDeals('date')" style="color:var(--text);cursor:pointer;text-decoration:underline">Due date</span>
+            <span onclick="sortDeals('amount')" style="color:var(--text);cursor:pointer;text-decoration:underline">Amount</span>
+            <span onclick="sortDeals('created')" style="color:var(--text);cursor:pointer;text-decoration:underline">Newest</span>
+        </div>
+
+        <!-- Deal list -->
+        <div id="dealList"></div>
+
+        <!-- Add deal button -->
+        <button onclick="toggleDealForm()" id="addDealBtn" class="limits-btn limits-btn-neutral" style="margin-top:8px">+ New Deal</button>
+
+        <!-- Deal form (hidden) -->
+        <div id="dealForm" style="display:none;margin-top:10px">
+            <div class="ugc-form">
+                <div class="ugc-form-grid">
+                    <div><label style="font-size:0.65rem;color:var(--text2)">Brand / Contact</label><input type="text" id="dealBrand" class="limits-input" placeholder="e.g. Lululemon"></div>
+                    <div><label style="font-size:0.65rem;color:var(--text2)">Contact method</label><select id="dealContact" class="limits-input"><option value="email">Email</option><option value="instagram">Instagram</option><option value="tiktok">TikTok</option><option value="other">Other</option></select></div>
+                    <div><label style="font-size:0.65rem;color:var(--text2)">Offer amount ($)</label><input type="number" id="dealAmount" class="limits-input" step="0.01" placeholder="0"></div>
+                    <div><label style="font-size:0.65rem;color:var(--text2)">Status</label><select id="dealStatus" class="limits-input"><option value="lead">Lead</option><option value="in-talks">In Talks</option><option value="agreed">Agreed</option><option value="in-progress">In Progress</option><option value="submitted">Submitted</option><option value="paid">Paid</option><option value="declined">Declined</option></select></div>
+                    <div><label style="font-size:0.65rem;color:var(--text2)">Due / delivery date</label><input type="date" id="dealDue" class="limits-input"></div>
+                    <div><label style="font-size:0.65rem;color:var(--text2)">Usage rights expiry</label><input type="date" id="dealExpiry" class="limits-input"></div>
+                    <div><label style="font-size:0.65rem;color:var(--text2)">Payment status</label><select id="dealPayment" class="limits-input"><option value="unpaid">Unpaid</option><option value="invoiced">Invoiced</option><option value="paid">Paid</option></select></div>
+                </div>
+                <div class="ugc-form-full">
+                    <label style="font-size:0.65rem;color:var(--text2)">Deliverables</label>
+                    <input type="text" id="dealDeliverables" class="limits-input" placeholder="e.g. 2 TikToks + 1 IG reel">
+                </div>
+                <div class="ugc-form-full">
+                    <label style="font-size:0.65rem;color:var(--text2)">Notes</label>
+                    <textarea id="dealNotes" class="limits-input" rows="3" placeholder="Brief details, links, what was negotiated..." style="resize:none"></textarea>
+                </div>
+                <button onclick="saveDeal()" class="limits-btn limits-btn-neutral" style="margin-top:6px">Save Deal</button>
+                <button onclick="toggleDealForm()" style="margin-top:4px;background:none;border:none;color:var(--text2);font-size:0.75rem;cursor:pointer;width:100%;padding:6px">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- INPUT -->
 <div class="input-area">
     <div class="input-wrap">
@@ -634,6 +724,11 @@ function switchProfile() {
     tomorrow = JSON.parse(localStorage.getItem('planner_tomorrow_' + currentProfile) || 'null') || {
         date: '', needleMover: '', priorities: []
     };
+    gamb = JSON.parse(localStorage.getItem('gamb_' + currentProfile) || 'null') || {
+        limits: { weekSpend: 100, monthSpend: 300, sessionSpend: 50, weekTime: 5 },
+        sessions: [], rules: ['Stop at session cap', 'No chasing losses', 'No gambling after a loss day', 'Cool off if I hit weekly cap', 'No gambling when stressed or upset']
+    };
+    ugc = JSON.parse(localStorage.getItem('ugc_' + currentProfile) || 'null') || { deals: [] };
     updateProfileBadge();
     checkDay();
     render();
@@ -646,9 +741,11 @@ function updateProfileBadge() {
     badge.style.background = profile.color + '22';
     badge.style.color = profile.color;
     badge.style.borderColor = profile.color + '44';
-    // Hide limits tab for Jess
+    // Hide limits tab for Jess, show UGC for Jess
     const limitsBtn = document.getElementById('limitsNavBtn');
+    const ugcBtn = document.getElementById('ugcNavBtn');
     if (limitsBtn) limitsBtn.style.display = currentProfile === 'jess' ? 'none' : 'flex';
+    if (ugcBtn) ugcBtn.style.display = currentProfile === 'jess' ? 'flex' : 'none';
 }
 
 function save() {
@@ -1379,6 +1476,7 @@ function showPage(page, el) {
     if (page === 'history') renderHistory();
     if (page === 'tomorrow') renderTomorrow();
     if (page === 'limits') renderLimits();
+    if (page === 'ugc') renderUgc();
 }
 
 function renderHistory() {
@@ -2375,6 +2473,173 @@ function renderLimits() {
                     (s.after ? '<div>After: ' + s.after + '</div>' : '') +
                 '</div>' : '') +
                 (s.rulesKept ? '<div style="margin-top:4px;font-size:0.65rem;color:var(--text2)">Rules kept: ' + s.rulesKept.length + '/' + (s.rulesTotal || gamb.rules.length) + '</div>' : '') +
+            '</div>';
+        }).join('');
+}
+
+// ============================================================
+// UGC TRACKER
+// ============================================================
+let ugc = JSON.parse(localStorage.getItem('ugc_' + currentProfile) || 'null') || { deals: [] };
+let dealFilter = 'all';
+let dealSort = 'created';
+let editingDealId = null;
+
+function saveUgc() { localStorage.setItem('ugc_' + currentProfile, JSON.stringify(ugc)); }
+
+const STATUS_LABELS = {
+    'lead': 'Lead', 'in-talks': 'In Talks', 'agreed': 'Agreed',
+    'in-progress': 'In Progress', 'submitted': 'Submitted', 'paid': 'Paid', 'declined': 'Declined'
+};
+const STATUS_ORDER = ['lead', 'in-talks', 'agreed', 'in-progress', 'submitted', 'paid', 'declined'];
+
+function toggleDealForm() {
+    const form = document.getElementById('dealForm');
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    if (form.style.display === 'none') { editingDealId = null; clearDealForm(); }
+}
+
+function clearDealForm() {
+    ['dealBrand','dealAmount','dealDeliverables','dealNotes'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('dealContact').value = 'email';
+    document.getElementById('dealStatus').value = 'lead';
+    document.getElementById('dealPayment').value = 'unpaid';
+    document.getElementById('dealDue').value = '';
+    document.getElementById('dealExpiry').value = '';
+}
+
+function saveDeal() {
+    const brand = document.getElementById('dealBrand').value.trim();
+    if (!brand) { alert('Enter a brand name'); return; }
+
+    const deal = {
+        id: editingDealId || Date.now(),
+        brand: brand,
+        contact: document.getElementById('dealContact').value,
+        amount: parseFloat(document.getElementById('dealAmount').value) || 0,
+        status: document.getElementById('dealStatus').value,
+        payment: document.getElementById('dealPayment').value,
+        deliverables: document.getElementById('dealDeliverables').value,
+        notes: document.getElementById('dealNotes').value,
+        dueDate: document.getElementById('dealDue').value,
+        expiryDate: document.getElementById('dealExpiry').value,
+        created: editingDealId ? (ugc.deals.find(d => d.id === editingDealId)?.created || todayStr()) : todayStr()
+    };
+
+    if (editingDealId) {
+        const idx = ugc.deals.findIndex(d => d.id === editingDealId);
+        if (idx >= 0) ugc.deals[idx] = deal;
+    } else {
+        ugc.deals.push(deal);
+    }
+
+    saveUgc();
+    editingDealId = null;
+    clearDealForm();
+    document.getElementById('dealForm').style.display = 'none';
+    renderUgc();
+}
+
+function editDeal(id) {
+    const deal = ugc.deals.find(d => d.id === id);
+    if (!deal) return;
+    editingDealId = id;
+    document.getElementById('dealBrand').value = deal.brand;
+    document.getElementById('dealContact').value = deal.contact;
+    document.getElementById('dealAmount').value = deal.amount;
+    document.getElementById('dealStatus').value = deal.status;
+    document.getElementById('dealPayment').value = deal.payment;
+    document.getElementById('dealDeliverables').value = deal.deliverables || '';
+    document.getElementById('dealNotes').value = deal.notes || '';
+    document.getElementById('dealDue').value = deal.dueDate || '';
+    document.getElementById('dealExpiry').value = deal.expiryDate || '';
+    document.getElementById('dealForm').style.display = 'block';
+}
+
+function deleteDeal(id) {
+    ugc.deals = ugc.deals.filter(d => d.id !== id);
+    saveUgc();
+    renderUgc();
+}
+
+function updateDealStatus(id, newStatus) {
+    const deal = ugc.deals.find(d => d.id === id);
+    if (deal) {
+        deal.status = newStatus;
+        if (newStatus === 'paid') deal.payment = 'paid';
+        saveUgc();
+        renderUgc();
+    }
+}
+
+function filterDeals(status, el) {
+    dealFilter = status;
+    document.querySelectorAll('#ugcPage .tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    renderUgc();
+}
+
+function sortDeals(by) { dealSort = by; renderUgc(); }
+
+function renderUgc() {
+    const today = todayStr();
+    const monthStart = today.substring(0, 7);
+    const next7 = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
+
+    // Stats
+    const monthDeals = ugc.deals.filter(d => d.created.startsWith(monthStart) || (d.status !== 'declined'));
+    const agreedThisMonth = ugc.deals.filter(d => ['agreed','in-progress','submitted','paid'].includes(d.status)).reduce((s, d) => s + d.amount, 0);
+    const paidThisMonth = ugc.deals.filter(d => d.payment === 'paid').reduce((s, d) => s + d.amount, 0);
+    const outstanding = ugc.deals.filter(d => ['agreed','in-progress','submitted'].includes(d.status) && d.payment !== 'paid').reduce((s, d) => s + d.amount, 0);
+    const activeCount = ugc.deals.filter(d => !['paid','declined'].includes(d.status)).length;
+
+    document.getElementById('ugcStats').innerHTML = `
+        <div class="ugc-stat"><div class="us-label">Agreed Value</div><div class="us-value" style="color:var(--gold)">$${agreedThisMonth.toFixed(0)}</div></div>
+        <div class="ugc-stat"><div class="us-label">Paid</div><div class="us-value" style="color:var(--neon-green)">$${paidThisMonth.toFixed(0)}</div></div>
+        <div class="ugc-stat"><div class="us-label">Outstanding</div><div class="us-value" style="color:${outstanding > 0 ? 'var(--gold)' : 'var(--text2)'}">$${outstanding.toFixed(0)}</div></div>
+        <div class="ugc-stat"><div class="us-label">Active Deals</div><div class="us-value" style="color:var(--text)">${activeCount}</div></div>
+    `;
+
+    // Due soon
+    const dueSoon = ugc.deals.filter(d => d.dueDate && d.dueDate >= today && d.dueDate <= next7 && !['paid','declined'].includes(d.status));
+    if (dueSoon.length > 0) {
+        document.getElementById('ugcDueSoon').innerHTML = '<div class="ugc-due-soon"><div style="font-size:0.7rem;color:#fbbf24;font-weight:600;margin-bottom:4px">Due in next 7 days</div>' +
+            dueSoon.map(d => '<div class="ugc-due-item"><span>' + d.brand + '</span><span style="color:var(--text2)">' + d.dueDate + '</span></div>').join('') +
+        '</div>';
+    } else {
+        document.getElementById('ugcDueSoon').innerHTML = '';
+    }
+
+    // Filter
+    let deals = dealFilter === 'all' ? [...ugc.deals] : ugc.deals.filter(d => d.status === dealFilter);
+
+    // Sort
+    if (dealSort === 'date') deals.sort((a, b) => (a.dueDate || 'z').localeCompare(b.dueDate || 'z'));
+    else if (dealSort === 'amount') deals.sort((a, b) => b.amount - a.amount);
+    else deals.sort((a, b) => b.id - a.id);
+
+    // Render deals
+    const contactIcons = { email: '📧', instagram: '📸', tiktok: '🎵', other: '💬' };
+
+    document.getElementById('dealList').innerHTML = deals.length === 0
+        ? '<div style="text-align:center;padding:20px;color:var(--text2);font-size:0.8rem">No deals yet — add one below</div>'
+        : deals.map(d => {
+            const nextStatus = STATUS_ORDER[STATUS_ORDER.indexOf(d.status) + 1];
+            return '<div class="deal-card">' +
+                '<div class="deal-header">' +
+                    '<div><div class="deal-brand">' + (contactIcons[d.contact] || '💬') + ' ' + d.brand + '</div>' +
+                    '<div class="deal-meta"><span class="deal-status" data-s="' + d.status + '">' + STATUS_LABELS[d.status] + '</span> · ' + d.contact + (d.payment !== 'unpaid' ? ' · ' + d.payment : '') + '</div></div>' +
+                    '<div class="deal-amount">' + (d.amount > 0 ? '$' + d.amount.toFixed(0) : '') + '</div>' +
+                '</div>' +
+                (d.deliverables ? '<div class="deal-deliverables">' + d.deliverables + '</div>' : '') +
+                (d.dueDate ? '<div class="deal-meta" style="margin-top:4px">Due: ' + d.dueDate + (d.expiryDate ? ' · Rights expire: ' + d.expiryDate : '') + '</div>' : '') +
+                (d.notes ? '<div class="deal-meta" style="margin-top:4px;font-style:italic">' + d.notes + '</div>' : '') +
+                '<div class="deal-actions">' +
+                    (nextStatus && nextStatus !== 'declined' ? '<div class="deal-act-btn" onclick="updateDealStatus(' + d.id + ',\'' + nextStatus + '\')">→ ' + STATUS_LABELS[nextStatus] + '</div>' : '') +
+                    '<div class="deal-act-btn" onclick="editDeal(' + d.id + ')">Edit</div>' +
+                    (d.status !== 'declined' ? '<div class="deal-act-btn" onclick="updateDealStatus(' + d.id + ',\'declined\')">Decline</div>' : '') +
+                    '<div class="deal-act-btn" onclick="deleteDeal(' + d.id + ')" style="color:var(--red)">Delete</div>' +
+                '</div>' +
             '</div>';
         }).join('');
 }
