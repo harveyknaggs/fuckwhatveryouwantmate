@@ -561,14 +561,32 @@
 
         <!-- My Rules -->
         <div class="limits-section">
-            <div class="limits-section-title">My Rules</div>
-            <div id="rulesList"></div>
-            <div style="display:flex;gap:6px;margin-top:8px">
-                <input type="text" id="newRuleInput" class="limits-input" placeholder="Add a rule..." style="flex:1">
-                <button onclick="addRule()" class="limits-btn limits-btn-neutral" style="width:auto;padding:8px 14px">+</button>
+            <div class="limits-section-title">My Rules — All Gambling</div>
+            <div id="rulesListAll"></div>
+            <div style="display:flex;gap:6px;margin-top:6px">
+                <input type="text" id="newRuleAllInput" class="limits-input" placeholder="Add overall rule..." style="flex:1">
+                <button onclick="addRule('all')" class="limits-btn limits-btn-neutral" style="width:auto;padding:8px 14px">+</button>
             </div>
-            <div style="margin-top:8px;font-size:0.75rem;color:var(--text2)">Rules kept (30 days): <span id="rulesKeptPct" style="font-weight:600">—</span></div>
         </div>
+
+        <div class="limits-section">
+            <div class="limits-section-title">Type-Specific Rules</div>
+            <div style="display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap">
+                <div class="tab active" onclick="showTypeRules('pub',this)">Pub</div>
+                <div class="tab" onclick="showTypeRules('poker',this)">Poker</div>
+                <div class="tab" onclick="showTypeRules('online',this)">Online</div>
+                <div class="tab" onclick="showTypeRules('tab',this)">TAB</div>
+                <div class="tab" onclick="showTypeRules('bet',this)">Bet</div>
+                <div class="tab" onclick="showTypeRules('other',this)">Other</div>
+            </div>
+            <div id="rulesListType"></div>
+            <div style="display:flex;gap:6px;margin-top:6px">
+                <input type="text" id="newRuleTypeInput" class="limits-input" placeholder="Add rule for this type..." style="flex:1">
+                <button onclick="addRule(currentRuleType)" class="limits-btn limits-btn-neutral" style="width:auto;padding:8px 14px">+</button>
+            </div>
+        </div>
+
+        <div style="font-size:0.75rem;color:var(--text2);margin-bottom:12px">Rules kept (30 days): <span id="rulesKeptPct" style="font-weight:600">—</span></div>
 
         <!-- Session History -->
         <div class="limits-section">
@@ -740,7 +758,23 @@ function switchProfile() {
     };
     gamb = JSON.parse(localStorage.getItem('gamb_' + currentProfile) || 'null') || {
         limits: { weekSpend: 100, monthSpend: 300, sessionSpend: 50, weekTime: 5 },
-        sessions: [], rules: ['Stop at session cap', 'No chasing losses', 'No gambling after a loss day', 'Cool off if I hit weekly cap', 'No gambling when stressed or upset']
+        sessions: [],
+        rules: {
+            all: [
+                'Any winnings cannot be re-gambled — in person goes in barbie bank, online into savings account',
+                'Stop at session budget',
+                'No chasing losses',
+                'No gambling after a loss day',
+                'Cool off if I hit weekly cap',
+                'No gambling when stressed or upset'
+            ],
+            pub: [],
+            poker: [],
+            online: [],
+            tab: [],
+            bet: [],
+            other: []
+        }
     };
     ugc = JSON.parse(localStorage.getItem('ugc_' + currentProfile) || 'null') || { deals: [] };
     updateProfileBadge();
@@ -2280,10 +2314,19 @@ function proceedToForm() {
     document.getElementById('sessionFormFull').style.display = 'block';
     document.getElementById('sessDate').value = todayStr();
 
-    // Render rules checkboxes
-    const html = gamb.rules.map((r, i) =>
-        '<div class="rule-item"><input type="checkbox" id="sessRule' + i + '" checked><label for="sessRule' + i + '" style="cursor:pointer">' + r + '</label></div>'
-    ).join('');
+    // Render rules checkboxes — update when venue changes
+    renderSessionRules();
+    document.getElementById('sessVenue').addEventListener('change', renderSessionRules);
+}
+
+function renderSessionRules() {
+    const venue = document.getElementById('sessVenue').value;
+    const rules = getAllRulesForType(venue);
+    const html = rules.length > 0
+        ? rules.map((r, i) =>
+            '<div class="rule-item"><input type="checkbox" id="sessRule' + i + '" checked><label for="sessRule' + i + '" style="cursor:pointer">' + r + '</label></div>'
+        ).join('')
+        : '<div style="font-size:0.8rem;color:var(--text2);padding:6px 0">No rules set — add some in My Rules below</div>';
     document.getElementById('sessionRulesCheck').innerHTML = html;
 }
 
@@ -2300,9 +2343,12 @@ function saveSession() {
 
     if (staked === 0 && time === 0) { alert('Enter at least a stake or time'); return; }
 
+    const venue = document.getElementById('sessVenue').value;
+    const sessionRules = getAllRulesForType(venue);
     const rulesKept = [];
-    gamb.rules.forEach((r, i) => {
-        if (document.getElementById('sessRule' + i).checked) rulesKept.push(r);
+    sessionRules.forEach((r, i) => {
+        const cb = document.getElementById('sessRule' + i);
+        if (cb && cb.checked) rulesKept.push(r);
     });
 
     const maxBal = parseFloat(document.getElementById('sessMaxBal').value) || 0;
@@ -2324,7 +2370,7 @@ function saveSession() {
         before: document.getElementById('sessBefore').value,
         after: document.getElementById('sessAfter').value,
         rulesKept: rulesKept,
-        rulesTotal: gamb.rules.length
+        rulesTotal: sessionRules.length
     });
 
     saveGamb();
@@ -2350,20 +2396,63 @@ function deleteSession(id) {
     renderLimits();
 }
 
-function addRule() {
-    const input = document.getElementById('newRuleInput');
+let currentRuleType = 'pub';
+
+function migrateRules() {
+    // Migrate old flat rules array to new structure
+    if (Array.isArray(gamb.rules)) {
+        const old = gamb.rules;
+        gamb.rules = { all: old, pub: [], poker: [], online: [], tab: [], bet: [], other: [] };
+        saveGamb();
+    }
+    if (!gamb.rules.all) gamb.rules = { all: [], pub: [], poker: [], online: [], tab: [], bet: [], other: [] };
+}
+
+function addRule(type) {
+    migrateRules();
+    const inputId = type === 'all' ? 'newRuleAllInput' : 'newRuleTypeInput';
+    const input = document.getElementById(inputId);
     const text = input.value.trim();
     if (!text) return;
-    gamb.rules.push(text);
+    if (!gamb.rules[type]) gamb.rules[type] = [];
+    gamb.rules[type].push(text);
     saveGamb();
     input.value = '';
     renderLimits();
 }
 
-function removeRule(idx) {
-    gamb.rules.splice(idx, 1);
+function removeRule(type, idx) {
+    migrateRules();
+    gamb.rules[type].splice(idx, 1);
     saveGamb();
     renderLimits();
+}
+
+function showTypeRules(type, el) {
+    currentRuleType = type;
+    if (el) {
+        el.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        el.classList.add('active');
+    }
+    renderTypeRules();
+}
+
+function renderTypeRules() {
+    migrateRules();
+    const rules = gamb.rules[currentRuleType] || [];
+    document.getElementById('rulesListType').innerHTML = rules.length === 0
+        ? '<div style="font-size:0.8rem;color:var(--text2);padding:6px 0">No rules for ' + currentRuleType + ' yet</div>'
+        : rules.map((r, i) =>
+            '<div class="rule-item"><span style="flex:1">' + r + '</span><button onclick="removeRule(\'' + currentRuleType + '\',' + i + ')" style="background:none;border:none;color:var(--text2);cursor:pointer;font-size:0.8rem">×</button></div>'
+        ).join('');
+}
+
+function getAllRulesForType(venueType) {
+    migrateRules();
+    const type = venueType.toLowerCase();
+    const allRules = gamb.rules.all || [];
+    const typeRules = gamb.rules[type] || [];
+    return [...allRules, ...typeRules];
 }
 
 function renderLimits() {
@@ -2453,10 +2542,17 @@ function renderLimits() {
         </div>
     `;
 
-    // Rules
-    document.getElementById('rulesList').innerHTML = gamb.rules.map((r, i) =>
-        '<div class="rule-item"><span style="flex:1">' + r + '</span><button onclick="removeRule(' + i + ')" style="background:none;border:none;color:var(--text2);cursor:pointer;font-size:0.8rem">×</button></div>'
-    ).join('') || '<div style="font-size:0.8rem;color:var(--text2);padding:8px 0">No rules set yet</div>';
+    // Rules — overall
+    migrateRules();
+    const allRules = gamb.rules.all || [];
+    document.getElementById('rulesListAll').innerHTML = allRules.length === 0
+        ? '<div style="font-size:0.8rem;color:var(--text2);padding:6px 0">No overall rules set yet</div>'
+        : allRules.map((r, i) =>
+            '<div class="rule-item"><span style="flex:1">' + r + '</span><button onclick="removeRule(\'all\',' + i + ')" style="background:none;border:none;color:var(--text2);cursor:pointer;font-size:0.8rem">×</button></div>'
+        ).join('');
+
+    // Type-specific rules
+    renderTypeRules();
 
     // Rules kept percentage (last 30 days)
     const last30 = allSess.filter(s => {
@@ -2465,7 +2561,7 @@ function renderLimits() {
     });
     if (last30.length > 0) {
         const totalRulesKept = last30.reduce((s, sess) => s + (sess.rulesKept ? sess.rulesKept.length : 0), 0);
-        const totalRulesPossible = last30.reduce((s, sess) => s + (sess.rulesTotal || gamb.rules.length), 0);
+        const totalRulesPossible = last30.reduce((s, sess) => s + (sess.rulesTotal || 1), 0);
         const pct = totalRulesPossible > 0 ? Math.round((totalRulesKept / totalRulesPossible) * 100) : 0;
         document.getElementById('rulesKeptPct').textContent = pct + '%';
         document.getElementById('rulesKeptPct').style.color = pct >= 80 ? 'var(--text)' : pct >= 50 ? '#f59e0b' : 'var(--red)';
