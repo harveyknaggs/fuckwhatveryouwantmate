@@ -509,6 +509,39 @@
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px" id="gambTotals"></div>
         </div>
 
+        <!-- My Rules (collapsible) -->
+        <div class="limits-section">
+            <div onclick="document.getElementById('rulesDropdown').style.display = document.getElementById('rulesDropdown').style.display === 'none' ? 'block' : 'none'" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer">
+                <div class="limits-section-title" style="margin:0">My Rules</div>
+                <span style="color:var(--text2);font-size:0.8rem">▼</span>
+            </div>
+            <div id="rulesDropdown" style="display:none;margin-top:8px">
+                <div style="font-size:0.7rem;color:var(--gold);margin-bottom:6px">ALL GAMBLING</div>
+                <div id="rulesListAll"></div>
+                <div style="display:flex;gap:6px;margin-top:6px">
+                    <input type="text" id="newRuleAllInput" class="limits-input" placeholder="Add overall rule..." style="flex:1">
+                    <button onclick="addRule('all')" class="limits-btn limits-btn-neutral" style="width:auto;padding:8px 14px">+</button>
+                </div>
+
+                <div style="font-size:0.7rem;color:var(--neon-blue);margin:12px 0 6px">TYPE-SPECIFIC</div>
+                <div style="display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap">
+                    <div class="tab active" onclick="showTypeRules('pub',this)">Pub</div>
+                    <div class="tab" onclick="showTypeRules('poker',this)">Poker</div>
+                    <div class="tab" onclick="showTypeRules('online',this)">Online</div>
+                    <div class="tab" onclick="showTypeRules('tab',this)">TAB</div>
+                    <div class="tab" onclick="showTypeRules('bet',this)">Bet</div>
+                    <div class="tab" onclick="showTypeRules('other',this)">Other</div>
+                </div>
+                <div id="rulesListType"></div>
+                <div style="display:flex;gap:6px;margin-top:6px">
+                    <input type="text" id="newRuleTypeInput" class="limits-input" placeholder="Add rule for this type..." style="flex:1">
+                    <button onclick="addRule(currentRuleType)" class="limits-btn limits-btn-neutral" style="width:auto;padding:8px 14px">+</button>
+                </div>
+
+                <div style="margin-top:10px;font-size:0.75rem;color:var(--text2)">Rules kept (30 days): <span id="rulesKeptPct" style="font-weight:600">—</span></div>
+            </div>
+        </div>
+
         <!-- Log session -->
         <div class="limits-section">
             <div class="limits-section-title">Log a Session</div>
@@ -559,34 +592,6 @@
             </div>
         </div>
 
-        <!-- My Rules -->
-        <div class="limits-section">
-            <div class="limits-section-title">My Rules — All Gambling</div>
-            <div id="rulesListAll"></div>
-            <div style="display:flex;gap:6px;margin-top:6px">
-                <input type="text" id="newRuleAllInput" class="limits-input" placeholder="Add overall rule..." style="flex:1">
-                <button onclick="addRule('all')" class="limits-btn limits-btn-neutral" style="width:auto;padding:8px 14px">+</button>
-            </div>
-        </div>
-
-        <div class="limits-section">
-            <div class="limits-section-title">Type-Specific Rules</div>
-            <div style="display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap">
-                <div class="tab active" onclick="showTypeRules('pub',this)">Pub</div>
-                <div class="tab" onclick="showTypeRules('poker',this)">Poker</div>
-                <div class="tab" onclick="showTypeRules('online',this)">Online</div>
-                <div class="tab" onclick="showTypeRules('tab',this)">TAB</div>
-                <div class="tab" onclick="showTypeRules('bet',this)">Bet</div>
-                <div class="tab" onclick="showTypeRules('other',this)">Other</div>
-            </div>
-            <div id="rulesListType"></div>
-            <div style="display:flex;gap:6px;margin-top:6px">
-                <input type="text" id="newRuleTypeInput" class="limits-input" placeholder="Add rule for this type..." style="flex:1">
-                <button onclick="addRule(currentRuleType)" class="limits-btn limits-btn-neutral" style="width:auto;padding:8px 14px">+</button>
-            </div>
-        </div>
-
-        <div style="font-size:0.75rem;color:var(--text2);margin-bottom:12px">Rules kept (30 days): <span id="rulesKeptPct" style="font-weight:600">—</span></div>
 
         <!-- Session History -->
         <div class="limits-section">
