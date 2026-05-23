@@ -446,14 +446,13 @@
             <div style="font-family:'Orbitron',monospace;font-size:2.5rem;font-weight:900" id="gambAllTimeNet">$0</div>
         </div>
 
-        <!-- Limit bars -->
-        <div class="limits-section">
+        <!-- Limit bars (hidden for now — tracking only for first month) -->
+        <div class="limits-section" id="limitBarsSection" style="display:none">
             <div class="limits-section-title">My Limits</div>
             <div id="limitBars"></div>
             <div id="exceededBanners"></div>
             <button onclick="showEditLimits()" style="margin-top:6px;background:none;border:1px solid var(--border);border-radius:6px;padding:6px 12px;color:var(--text2);font-size:0.7rem;cursor:pointer">Edit Limits</button>
 
-            <!-- Edit limits form (hidden by default) -->
             <div id="editLimitsForm" style="display:none;margin-top:10px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px">
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
                     <div><label style="font-size:0.65rem;color:var(--text2)">Weekly spend cap ($)</label><input type="number" id="limWeekSpend" class="limits-input" step="1"></div>
@@ -463,6 +462,12 @@
                 </div>
                 <button onclick="saveLimits()" class="limits-btn limits-btn-neutral" style="margin-top:8px">Save Limits</button>
             </div>
+        </div>
+
+        <!-- Benchmarks -->
+        <div class="limits-section">
+            <div class="limits-section-title">Benchmarks</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="gambBenchmarks"></div>
         </div>
 
         <!-- Totals -->
@@ -480,7 +485,7 @@
 
             <!-- Session form -->
             <div id="sessionForm">
-                <button onclick="startLogSession()" class="limits-btn limits-btn-neutral">+ Log a Session</button>
+                <button onclick="proceedToForm()" class="limits-btn limits-btn-neutral">+ Log a Session</button>
             </div>
 
             <!-- Actual form (hidden until confirmed) -->
@@ -491,6 +496,7 @@
                     <div><label style="font-size:0.65rem;color:var(--text2)">Time spent (mins)</label><input type="number" id="sessTime" class="limits-input" placeholder="0"></div>
                     <div><label style="font-size:0.65rem;color:var(--text2)">Amount staked ($)</label><input type="number" id="sessStaked" class="limits-input" step="0.01" placeholder="0"></div>
                     <div><label style="font-size:0.65rem;color:var(--text2)">Amount returned ($)</label><input type="number" id="sessReturned" class="limits-input" step="0.01" placeholder="0"></div>
+                    <div><label style="font-size:0.65rem;color:var(--text2)">Max balance hit ($)</label><input type="number" id="sessMaxBal" class="limits-input" step="0.01" placeholder="Highest point in session"></div>
                 </div>
                 <div style="margin-bottom:8px">
                     <label style="font-size:0.65rem;color:var(--text2)">How I felt before</label>
@@ -2186,6 +2192,8 @@ function saveSession() {
         if (document.getElementById('sessRule' + i).checked) rulesKept.push(r);
     });
 
+    const maxBal = parseFloat(document.getElementById('sessMaxBal').value) || 0;
+
     gamb.sessions.push({
         id: Date.now(),
         date: document.getElementById('sessDate').value,
@@ -2194,6 +2202,8 @@ function saveSession() {
         staked: staked,
         returned: returned,
         net: returned - staked,
+        maxBal: maxBal,
+        potentialWin: maxBal > staked ? maxBal - staked : 0,
         before: document.getElementById('sessBefore').value,
         after: document.getElementById('sessAfter').value,
         rulesKept: rulesKept,
@@ -2208,6 +2218,7 @@ function saveSession() {
     document.getElementById('sessTime').value = '';
     document.getElementById('sessStaked').value = '';
     document.getElementById('sessReturned').value = '';
+    document.getElementById('sessMaxBal').value = '';
     document.getElementById('sessBefore').value = '';
     document.getElementById('sessAfter').value = '';
 
@@ -2282,6 +2293,22 @@ function renderLimits() {
     document.getElementById('limitBars').innerHTML = barsHtml;
     document.getElementById('exceededBanners').innerHTML = bannersHtml;
 
+    // Benchmarks
+    const totalWagered = allSess.reduce((s, sess) => s + sess.staked, 0);
+    const totalPotentialWin = allSess.reduce((s, sess) => s + (sess.potentialWin || 0), 0);
+
+    document.getElementById('gambBenchmarks').innerHTML = `
+        <div class="limit-card" style="text-align:center">
+            <div class="limit-label">Total Wagered</div>
+            <div class="limit-value" style="color:var(--text)">$${totalWagered.toFixed(2)}</div>
+        </div>
+        <div class="limit-card" style="text-align:center">
+            <div class="limit-label">Left On Table</div>
+            <div class="limit-value" style="color:var(--text2)">$${totalPotentialWin.toFixed(2)}</div>
+            <div style="font-size:0.6rem;color:var(--text2);margin-top:2px">Could have won if cashed out at max</div>
+        </div>
+    `;
+
     // Totals
     document.getElementById('gambTotals').innerHTML = `
         <div class="limit-card" style="text-align:center">
@@ -2332,6 +2359,7 @@ function renderLimits() {
                     '<span style="color:var(--text2)">Returned: $' + s.returned.toFixed(2) + '</span>' +
                     '<span class="' + (net >= 0 ? 'session-net-pos' : 'session-net-neg') + '" style="font-weight:600">Net: ' + (net >= 0 ? '+' : '') + '$' + net.toFixed(2) + '</span>' +
                     '<span style="color:var(--text2)">' + s.time + ' min</span>' +
+                    (s.maxBal ? '<span style="color:var(--text2)">Max: $' + s.maxBal.toFixed(2) + '</span>' : '') +
                 '</div>' +
                 (s.before || s.after ? '<div style="margin-top:6px;font-size:0.7rem;color:var(--text2);border-top:1px solid var(--border);padding-top:6px">' +
                     (s.before ? '<div>Before: ' + s.before + '</div>' : '') +
