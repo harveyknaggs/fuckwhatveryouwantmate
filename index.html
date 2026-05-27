@@ -2905,12 +2905,14 @@ function renderArchive() {
 
 // Reset old scores (keep tasks as history)
 function resetOldScores() {
-    if (localStorage.getItem('scores_reset_26may')) return;
+    if (localStorage.getItem('scores_reset_27may')) return;
     state.todayScore = 0;
     state.totalXP = 0;
     state.history = {};
     state.completedToday = 0;
-    localStorage.setItem('scores_reset_26may', 'true');
+    state.streak = 0;
+    state.combo = 0;
+    localStorage.setItem('scores_reset_27may', 'true');
     save();
 }
 
