@@ -2825,7 +2825,98 @@ function renderUgc() {
         }).join('');
 }
 
+// ============================================================
+// LOAD WEEK — 26 May
+// ============================================================
+function loadWeek26May() {
+    if (localStorage.getItem('week_26may_loaded')) return;
+
+    const tasks = [
+        // MONDAY JOBS
+        { text: '53 Major Aitken Rd — touch up', category: 'site-visits', urgency: 'today', points: 48 },
+        { text: '76 Tuahiwi Rd — 11am LOCKED', category: 'site-visits', urgency: 'today', points: 60 },
+        { text: '35 Breens Rd — order plants', category: 'admin', urgency: 'today', points: 30 },
+        { text: '67A Aldwins — check property, turn water off', category: 'site-visits', urgency: 'today', points: 48 },
+
+        // TUESDAY
+        { text: '167C Rockinghorses Rd (Colin) — presale tidy landscaping START', category: 'site-visits', urgency: 'week', points: 60 },
+        { text: '18 Searells Rd — presale tidy START', category: 'site-visits', urgency: 'week', points: 60 },
+
+        // WEDNESDAY
+        { text: 'Call Callam Mitchell', category: 'admin', urgency: 'week', points: 24 },
+        { text: 'Call Sam (19B Swanleigh) — waterblast + tidy', category: 'admin', urgency: 'week', points: 24 },
+
+        // THIS WEEK
+        { text: '173 Hoonhay Rd (Robyn) — mow, weed, weedmat, bark, softwash, waterblast', category: 'site-visits', urgency: 'overdue', points: 80 },
+        { text: '280 Annex Rd — front landscaping', category: 'site-visits', urgency: 'week', points: 60 },
+
+        // QUOTES — SCOPED, SEND
+        { text: 'Quote — 111 Slater St, 20sqm artificial lawn ~$3,600', category: 'quotes', urgency: 'today', points: 100 },
+        { text: 'Quote — 14 Lytham Green ~$460', category: 'quotes', urgency: 'week', points: 60 },
+        { text: 'Quote — 94 Edward Ave ~$3,000-3,500 (dig hole, check pipe)', category: 'quotes', urgency: 'week', points: 75 },
+        { text: 'Quote — 3 Pines Ave South (Sally) under $1,000 + boxing edges', category: 'quotes', urgency: 'week', points: 60 },
+        { text: 'Quote — 19B Swanleigh (Sam) ~$1,200 + ~$1,500', category: 'quotes', urgency: 'week', points: 75 },
+
+        // QUOTES — TO PRODUCE
+        { text: 'Quote — 11 Evelyn Cres, formal quote + design photos', category: 'quotes', urgency: 'week', points: 60 },
+        { text: 'Quote — 65 Dickson Cr, fence + garden tidy + sump', category: 'quotes', urgency: 'week', points: 60 },
+        { text: 'Quote — 138 Wales St (call her then quote)', category: 'quotes', urgency: 'week', points: 60 },
+        { text: 'Quote — 34 Flemington Ave (check if she wants one)', category: 'quotes', urgency: 'week', points: 50 },
+        { text: 'Quote — 40 Hillsborough Tce, new lawn landscaping', category: 'quotes', urgency: 'week', points: 60 },
+
+        // PLANNING
+        { text: 'PLAN — Ger $19k deck, schedule + plan', category: 'quotes', urgency: 'overdue', points: 150 },
+        { text: 'PLAN — 41 Hamilton Ave fence', category: 'quotes', urgency: 'week', points: 60 },
+        { text: 'PLAN — 2/133 Blighs Rd (Vanessa) full job', category: 'quotes', urgency: 'week', points: 60 },
+        { text: 'Call Edgar — stumps, confirm start with Jeremy (11 Print Place)', category: 'admin', urgency: 'week', points: 30 },
+
+        // CALLS — RETRY
+        { text: 'Call Shane Waldron — retry', category: 'admin', urgency: 'today', points: 30 },
+        { text: 'Call Charlotte — retry', category: 'admin', urgency: 'today', points: 30 },
+
+        // CALLS — TO DO
+        { text: 'Call 138 Wales St', category: 'admin', urgency: 'week', points: 24 },
+        { text: 'Call 68 Grange St', category: 'admin', urgency: 'week', points: 24 },
+        { text: 'Call Carla (3/7 Beveridge St)', category: 'admin', urgency: 'week', points: 24 },
+        { text: 'Call Edgar — stumps', category: 'admin', urgency: 'week', points: 24 },
+
+        // DRIVE-BYS
+        { text: 'Drive-by — 34 Flemington Ave', category: 'site-visits', urgency: 'week', points: 40 },
+        { text: 'Drive-by — 43 Rutland', category: 'site-visits', urgency: 'week', points: 40 },
+
+        // MAINTENANCE
+        { text: 'Oday — set up + plant garden', category: 'site-visits', urgency: 'week', points: 48 },
+
+        // BOOKED — SCHEDULE
+        { text: 'Schedule — Ger deck $19,121', category: 'admin', urgency: 'overdue', points: 40 },
+        { text: 'Schedule — 26 Evans Pass ~$7,500 + GST', category: 'admin', urgency: 'week', points: 30 },
+        { text: 'Schedule — 28 McDonald St Ashburton', category: 'admin', urgency: 'week', points: 24 },
+        { text: 'Schedule — Ian (week of 17th/24th)', category: 'admin', urgency: 'week', points: 24 },
+
+        // IN PERSON
+        { text: 'Sit-down with Mark Rocket', category: 'admin', urgency: 'week', points: 30 },
+    ];
+
+    const now = Date.now();
+    tasks.forEach((t, i) => {
+        state.tasks.push({
+            id: now + 20000 + i,
+            text: t.text,
+            category: t.category,
+            urgency: t.urgency,
+            points: t.points,
+            done: false,
+            created: todayStr(),
+            completedAt: null
+        });
+    });
+
+    localStorage.setItem('week_26may_loaded', 'true');
+    save();
+}
+
 // Init
+loadWeek26May();
 updateProfileBadge();
 checkDay();
 ensureHabits();
