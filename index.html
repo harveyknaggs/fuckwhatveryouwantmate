@@ -337,6 +337,7 @@
         <div class="nav-btn active" onclick="showPage('tasks',this)">Today</div>
         <div class="nav-btn" onclick="showPage('tomorrow',this)">Tomorrow</div>
         <div class="nav-btn" onclick="showPage('history',this)">History</div>
+        <div class="nav-btn" onclick="showPage('archive',this)">Archive</div>
         <div class="nav-btn" id="limitsNavBtn" onclick="showPage('limits',this)">Limits</div>
         <div class="nav-btn" id="ugcNavBtn" onclick="showPage('ugc',this)" style="display:none">UGC</div>
         <div class="nav-btn" onclick="cashOut()">Cash Out</div>
@@ -602,6 +603,12 @@
     </div>
 </div>
 
+    <!-- ARCHIVE PAGE -->
+    <div class="page" id="archivePage">
+        <div style="font-family:'Orbitron',monospace;font-size:0.8rem;color:var(--gold);margin-bottom:12px">COMPLETED TASKS</div>
+        <div id="archiveList"></div>
+    </div>
+
     <!-- UGC PAGE -->
     <div class="page" id="ugcPage">
         <!-- Stats -->
@@ -713,6 +720,17 @@
     <div style="font-family:'Orbitron',monospace;font-size:1.3rem;font-weight:900;color:var(--text)" id="betTimerClock">00:00</div>
     <div style="font-size:0.6rem;color:var(--text2)" id="betTimerTask"></div>
     <button onclick="cancelBet()" style="margin-top:4px;background:none;border:1px solid var(--red);border-radius:12px;padding:2px 12px;font-size:0.6rem;color:var(--red);cursor:pointer">Cancel Bet</button>
+</div>
+
+<!-- NOTES OVERLAY -->
+<div id="notesOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:400;align-items:center;justify-content:center;padding:20px">
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;width:100%;max-width:400px">
+        <div style="font-size:0.9rem;font-weight:600;margin-bottom:4px" id="notesTaskTitle"></div>
+        <div style="font-size:0.7rem;color:var(--text2);margin-bottom:12px">Add a note before completing (optional)</div>
+        <textarea id="notesInput" class="limits-input" rows="4" placeholder="What happened? Any follow-up needed?" style="resize:none;margin-bottom:10px"></textarea>
+        <button onclick="confirmComplete()" style="width:100%;padding:10px;border-radius:8px;border:none;background:var(--gold);color:#000;font-weight:700;font-size:0.85rem;cursor:pointer">Complete Task</button>
+        <button onclick="cancelNotes()" style="width:100%;margin-top:6px;padding:8px;background:none;border:none;color:var(--text2);font-size:0.75rem;cursor:pointer">Cancel</button>
+    </div>
 </div>
 
 <!-- PAYOUT OVERLAY -->
@@ -1169,9 +1187,37 @@ function addTask() {
     }
 }
 
+let pendingCompleteId = null;
+
 function completeTask(id) {
     const task = state.tasks.find(t => t.id === id);
     if (!task || task.done) return;
+
+    // Show notes overlay first
+    pendingCompleteId = id;
+    document.getElementById('notesTaskTitle').textContent = task.text;
+    document.getElementById('notesInput').value = '';
+    document.getElementById('notesOverlay').style.display = 'flex';
+    return;
+}
+
+function cancelNotes() {
+    pendingCompleteId = null;
+    document.getElementById('notesOverlay').style.display = 'none';
+}
+
+function confirmComplete() {
+    const id = pendingCompleteId;
+    if (!id) return;
+    const notes = document.getElementById('notesInput').value.trim();
+    document.getElementById('notesOverlay').style.display = 'none';
+    pendingCompleteId = null;
+
+    const task = state.tasks.find(t => t.id === id);
+    if (!task || task.done) return;
+
+    // Save notes
+    task.completionNotes = notes;
 
     // Calculate points
     let multiplier = 1;
@@ -1540,6 +1586,7 @@ function showPage(page, el) {
     if (page === 'tomorrow') renderTomorrow();
     if (page === 'limits') { migrateRules(); renderLimits(); }
     if (page === 'ugc') renderUgc();
+    if (page === 'archive') renderArchive();
 }
 
 function renderHistory() {
@@ -2826,6 +2873,48 @@ function renderUgc() {
 }
 
 // ============================================================
+// ARCHIVE
+// ============================================================
+function renderArchive() {
+    const done = state.tasks.filter(t => t.done).sort((a, b) => {
+        const dateA = a.completedAt || a.created;
+        const dateB = b.completedAt || b.created;
+        return dateB.localeCompare(dateA);
+    });
+
+    document.getElementById('archiveList').innerHTML = done.length === 0
+        ? '<div style="text-align:center;padding:20px;color:var(--text2);font-size:0.8rem">No completed tasks yet</div>'
+        : done.map(t => {
+            const cat = CATEGORIES[t.category] || CATEGORIES.other;
+            const completedDate = t.completedAt ? new Date(t.completedAt).toLocaleDateString('en-NZ', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : t.created;
+            return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:6px">' +
+                '<div style="display:flex;justify-content:space-between;align-items:flex-start">' +
+                    '<div style="flex:1">' +
+                        '<div style="font-size:0.85rem;color:var(--text)">' + t.text + '</div>' +
+                        '<div style="font-size:0.7rem;color:var(--text2);margin-top:2px">' +
+                            '<span class="task-cat" data-cat="' + t.category + '">' + cat.icon + ' ' + cat.label + '</span> · ' +
+                            completedDate +
+                        '</div>' +
+                    '</div>' +
+                    '<div style="font-family:Orbitron,monospace;font-size:0.7rem;color:var(--neon-green);flex-shrink:0">✓</div>' +
+                '</div>' +
+                (t.completionNotes ? '<div style="margin-top:6px;padding:6px 8px;background:var(--bg);border-radius:6px;font-size:0.75rem;color:var(--text2)">' + t.completionNotes + '</div>' : '') +
+            '</div>';
+        }).join('');
+}
+
+// Reset old scores (keep tasks as history)
+function resetOldScores() {
+    if (localStorage.getItem('scores_reset_26may')) return;
+    state.todayScore = 0;
+    state.totalXP = 0;
+    state.history = {};
+    state.completedToday = 0;
+    localStorage.setItem('scores_reset_26may', 'true');
+    save();
+}
+
+// ============================================================
 // LOAD WEEK — 26 May
 // ============================================================
 function loadWeek26May() {
@@ -2881,7 +2970,7 @@ function loadWeek26May() {
         { text: 'Call Edgar — stumps', category: 'admin', urgency: 'week', points: 24 },
 
         // DRIVE-BYS
-        { text: 'Drive-by — 34 Flemington Ave', category: 'site-visits', urgency: 'week', points: 40 },
+        { text: 'Call owner of 34 Flemington Ave', category: 'admin', urgency: 'week', points: 24 },
         { text: 'Drive-by — 43 Rutland', category: 'site-visits', urgency: 'week', points: 40 },
 
         // MAINTENANCE
@@ -2889,7 +2978,7 @@ function loadWeek26May() {
 
         // BOOKED — SCHEDULE
         { text: 'Schedule — Ger deck $19,121', category: 'admin', urgency: 'overdue', points: 40 },
-        { text: 'Schedule — 26 Evans Pass ~$7,500 + GST', category: 'admin', urgency: 'week', points: 30 },
+        { text: '26 Evans Pass (Mike King) — spring time, ~$7,500 + GST', category: 'quotes', urgency: 'none', points: 50 },
         { text: 'Schedule — 28 McDonald St Ashburton', category: 'admin', urgency: 'week', points: 24 },
         { text: 'Schedule — Ian (week of 17th/24th)', category: 'admin', urgency: 'week', points: 24 },
 
@@ -2916,6 +3005,7 @@ function loadWeek26May() {
 }
 
 // Init
+resetOldScores();
 loadWeek26May();
 updateProfileBadge();
 checkDay();
