@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>UGC Brand CRM</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="UGC CRM">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#fff5f7">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+:root{
+  --bg:#fdf7f9; --bg2:#ffffff; --card:#ffffff;
+  --ink:#2b2330; --ink2:#7a7185; --line:#f0e6eb;
+  --pink:#ff5d8f; --pink2:#ff8fb1; --pinkSoft:#ffe6ee;
+  --plum:#7c4dff; --plumSoft:#efe9ff;
+  --green:#1fb87a; --greenSoft:#e1f6ee;
+  --amber:#f4a51c; --amberSoft:#fdf0d8;
+  --blue:#2f9bff; --blueSoft:#e2f0ff;
+  --grey:#9b93a3; --greySoft:#f1eef4;
+  --shadow:0 6px 22px rgba(124,77,255,.08), 0 2px 6px rgba(43,35,48,.05);
+}
+body{ font-family:'Inter',sans-serif; background:var(--bg); color:var(--ink); min-height:100vh; -webkit-font-smoothing:antialiased; }
+.wrap{ max-width:760px; margin:0 auto; padding:0 14px 120px; }
+
+/* Header */
+.topbar{ position:sticky; top:0; z-index:50; background:linear-gradient(180deg,var(--bg) 70%, rgba(253,247,249,0)); padding:18px 14px 10px; }
+.topbar-inner{ max-width:760px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.title{ font-family:'Fraunces',serif; font-weight:700; font-size:1.5rem; letter-spacing:-.5px; display:flex; align-items:center; gap:8px; }
+.title .heart{ color:var(--pink); }
+.title small{ display:block; font-family:'Inter'; font-weight:500; font-size:.7rem; color:var(--ink2); letter-spacing:.3px; margin-top:1px; }
+.tools{ display:flex; gap:7px; }
+.icon-btn{ background:var(--bg2); border:1px solid var(--line); border-radius:12px; width:40px; height:40px; display:grid; place-items:center; font-size:1.05rem; cursor:pointer; box-shadow:var(--shadow); transition:transform .12s; }
+.icon-btn:active{ transform:scale(.92); }
+
+/* Stats */
+.stats{ display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin:6px 0 16px; }
+.stat{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:12px 12px 11px; box-shadow:var(--shadow); position:relative; overflow:hidden; }
+.stat .lab{ font-size:.66rem; color:var(--ink2); font-weight:600; text-transform:uppercase; letter-spacing:.4px; }
+.stat .val{ font-family:'Fraunces',serif; font-weight:700; font-size:1.5rem; margin-top:3px; letter-spacing:-.5px; }
+.stat.rev .val{ color:var(--green); }
+.stat.due .val{ color:var(--amber); }
+.stat.wait .val{ color:var(--blue); }
+.stat .spark{ position:absolute; right:-6px; bottom:-8px; font-size:2.4rem; opacity:.07; }
+
+/* Controls */
+.search{ display:flex; align-items:center; gap:8px; background:var(--bg2); border:1px solid var(--line); border-radius:14px; padding:10px 13px; box-shadow:var(--shadow); margin-bottom:11px; }
+.search input{ border:0; outline:0; background:transparent; flex:1; font-size:.95rem; color:var(--ink); font-family:'Inter'; }
+.search input::placeholder{ color:var(--grey); }
+.chips{ display:flex; gap:7px; overflow-x:auto; padding-bottom:9px; margin-bottom:6px; scrollbar-width:none; }
+.chips::-webkit-scrollbar{ display:none; }
+.chip{ flex:0 0 auto; border:1px solid var(--line); background:var(--bg2); color:var(--ink2); border-radius:20px; padding:7px 14px; font-size:.8rem; font-weight:600; cursor:pointer; white-space:nowrap; transition:.15s; }
+.chip.on{ background:var(--ink); color:#fff; border-color:var(--ink); }
+.chip .ct{ opacity:.55; margin-left:4px; font-weight:600; }
+
+/* Section */
+.section-head{ display:flex; align-items:center; gap:8px; margin:18px 2px 9px; }
+.section-head h2{ font-family:'Fraunces',serif; font-weight:600; font-size:1.05rem; }
+.section-head .ct{ font-size:.75rem; color:var(--ink2); background:var(--greySoft); border-radius:20px; padding:2px 9px; font-weight:600; }
+.section-head .line{ flex:1; height:1px; background:var(--line); }
+
+/* Brand card */
+.card{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:13px 14px; box-shadow:var(--shadow); margin-bottom:10px; cursor:pointer; transition:transform .12s, box-shadow .2s; position:relative; }
+.card:active{ transform:scale(.99); }
+.card .row1{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+.card .bname{ font-family:'Fraunces',serif; font-weight:600; font-size:1.08rem; letter-spacing:-.3px; line-height:1.2; }
+.card .meta{ font-size:.78rem; color:var(--ink2); margin-top:2px; display:flex; flex-wrap:wrap; gap:4px 10px; }
+.card .meta a{ color:var(--plum); text-decoration:none; }
+.badge{ flex:0 0 auto; font-size:.68rem; font-weight:700; padding:5px 10px; border-radius:20px; white-space:nowrap; letter-spacing:.2px; }
+.card .row2{ display:flex; align-items:center; gap:8px; margin-top:10px; flex-wrap:wrap; }
+.tag{ font-size:.7rem; font-weight:600; color:var(--ink2); background:var(--greySoft); border-radius:8px; padding:4px 9px; display:inline-flex; align-items:center; gap:4px; }
+.tag.money{ color:var(--green); background:var(--greenSoft); }
+.tag.paid{ color:var(--green); background:var(--greenSoft); }
+.tag.unpaid{ color:var(--amber); background:var(--amberSoft); }
+.tag.due{ color:#fff; background:var(--amber); }
+.tag.overdue{ color:#fff; background:var(--pink); }
+.empty{ text-align:center; color:var(--ink2); padding:50px 20px; }
+.empty .big{ font-size:2.6rem; margin-bottom:8px; }
+
+/* Status colours */
+.s-tocontact{ background:var(--greySoft); color:var(--grey); }
+.s-contacted{ background:var(--blueSoft); color:var(--blue); }
+.s-awaiting{ background:var(--amberSoft); color:var(--amber); }
+.s-negotiating{ background:var(--plumSoft); color:var(--plum); }
+.s-closed{ background:var(--greenSoft); color:var(--green); }
+.s-declined{ background:#fbe3e3; color:#d65656; }
+
+/* FAB */
+.fab{ position:fixed; right:max(18px,calc(50% - 380px + 18px)); bottom:calc(22px + env(safe-area-inset-bottom)); background:linear-gradient(135deg,var(--pink),var(--plum)); color:#fff; border:0; border-radius:18px; height:56px; padding:0 22px; font-size:1rem; font-weight:700; font-family:'Inter'; display:flex; align-items:center; gap:8px; box-shadow:0 10px 26px rgba(255,93,143,.4); cursor:pointer; z-index:60; transition:transform .12s; }
+.fab:active{ transform:scale(.94); }
+.fab .plus{ font-size:1.35rem; line-height:1; }
+
+/* Modal */
+.overlay{ position:fixed; inset:0; background:rgba(43,35,48,.45); backdrop-filter:blur(3px); z-index:100; display:none; align-items:flex-end; justify-content:center; }
+.overlay.on{ display:flex; }
+.sheet{ background:var(--bg); width:100%; max-width:760px; max-height:94vh; overflow-y:auto; border-radius:24px 24px 0 0; padding:8px 16px calc(28px + env(safe-area-inset-bottom)); animation:up .28s cubic-bezier(.2,.9,.3,1); }
+@keyframes up{ from{ transform:translateY(100%);} to{ transform:translateY(0);} }
+.grab{ width:42px; height:5px; background:var(--line); border-radius:3px; margin:8px auto 12px; }
+.sheet h3{ font-family:'Fraunces',serif; font-weight:700; font-size:1.3rem; margin-bottom:4px; }
+.sheet .sub{ font-size:.8rem; color:var(--ink2); margin-bottom:16px; }
+.field{ margin-bottom:13px; }
+.field label{ display:block; font-size:.74rem; font-weight:600; color:var(--ink2); margin-bottom:5px; text-transform:uppercase; letter-spacing:.3px; }
+.field input, .field select, .field textarea{ width:100%; border:1px solid var(--line); background:var(--bg2); border-radius:12px; padding:12px 13px; font-size:.95rem; font-family:'Inter'; color:var(--ink); outline:0; transition:border .15s; }
+.field input:focus, .field select:focus, .field textarea:focus{ border-color:var(--pink2); }
+.field textarea{ resize:vertical; min-height:74px; }
+.field-row{ display:grid; grid-template-columns:1fr 1fr; gap:11px; }
+.pillsel{ display:flex; flex-wrap:wrap; gap:7px; }
+.pillsel button{ border:1px solid var(--line); background:var(--bg2); color:var(--ink2); border-radius:11px; padding:9px 13px; font-size:.82rem; font-weight:600; cursor:pointer; font-family:'Inter'; transition:.12s; }
+.pillsel button.on{ background:var(--ink); color:#fff; border-color:var(--ink); }
+.sheet-actions{ display:flex; gap:10px; margin-top:20px; }
+.btn{ flex:1; border:0; border-radius:14px; padding:15px; font-size:.98rem; font-weight:700; font-family:'Inter'; cursor:pointer; transition:transform .12s; }
+.btn:active{ transform:scale(.97); }
+.btn-primary{ background:linear-gradient(135deg,var(--pink),var(--plum)); color:#fff; }
+.btn-ghost{ background:var(--greySoft); color:var(--ink2); }
+.btn-danger{ background:#fbe3e3; color:#d65656; flex:0 0 auto; padding:15px 18px; }
+.menu{ background:var(--bg); width:100%; max-width:760px; border-radius:24px 24px 0 0; padding:8px 16px calc(28px + env(safe-area-inset-bottom)); animation:up .28s cubic-bezier(.2,.9,.3,1); }
+.menu-item{ display:flex; align-items:center; gap:13px; padding:15px 6px; border-bottom:1px solid var(--line); cursor:pointer; font-size:.96rem; font-weight:500; }
+.menu-item:last-child{ border-bottom:0; }
+.menu-item .em{ font-size:1.25rem; width:26px; text-align:center; }
+.menu-item .desc{ font-size:.76rem; color:var(--ink2); font-weight:400; margin-top:1px; }
+.toast{ position:fixed; bottom:90px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--ink); color:#fff; padding:11px 20px; border-radius:30px; font-size:.85rem; font-weight:600; z-index:200; opacity:0; transition:.3s; pointer-events:none; box-shadow:0 8px 22px rgba(0,0,0,.25); }
+.toast.on{ opacity:1; transform:translateX(-50%) translateY(0); }
+.hint{ font-size:.78rem; color:var(--ink2); line-height:1.5; background:var(--bg2); border:1px solid var(--line); border-radius:12px; padding:12px; }
+.hint code{ background:var(--greySoft); padding:1px 5px; border-radius:5px; font-size:.74rem; }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="title"><span class="heart">♥</span> <span>UGC CRM<small id="ownerLine">Brand outreach pipeline</small></span></div>
+    <div class="tools">
+      <button class="icon-btn" id="filterBtn" title="Filter status">⚙︎</button>
+      <button class="icon-btn" id="menuBtn" title="Menu">⋯</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="stats" id="stats"></div>
+
+  <div class="search">
+    <span style="color:var(--grey)">⌕</span>
+    <input id="searchInput" type="text" placeholder="Search brands, contacts, niches…" autocomplete="off">
+  </div>
+  <div class="chips" id="nicheChips"></div>
+
+  <div id="list"></div>
+</div>
+
+<button class="fab" id="addBtn"><span class="plus">+</span> Brand</button>
+
+<!-- Edit / Add sheet -->
+<div class="overlay" id="editOverlay">
+  <div class="sheet" id="editSheet">
+    <div class="grab"></div>
+    <h3 id="editTitle">New brand</h3>
+    <div class="sub" id="editSub">Add a brand to the pipeline</div>
+
+    <div class="field"><label>Brand name</label><input id="f_name" type="text" placeholder="e.g. Fix and Fogg"></div>
+
+    <div class="field"><label>Status</label>
+      <div class="pillsel" id="f_status"></div>
+    </div>
+
+    <div class="field"><label>Niche</label>
+      <div class="pillsel" id="f_niche"></div>
+    </div>
+
+    <div class="field-row">
+      <div class="field"><label>Contact person</label><input id="f_contact" type="text" placeholder="Name"></div>
+      <div class="field"><label>Email</label><input id="f_email" type="email" placeholder="hello@brand.com"></div>
+    </div>
+
+    <div class="field"><label>Website</label><input id="f_website" type="text" placeholder="brand.com"></div>
+    <div class="field"><label>Address</label><input id="f_address" type="text" placeholder="Optional"></div>
+
+    <div class="field-row">
+      <div class="field"><label>Date contacted</label><input id="f_contacted" type="date"></div>
+      <div class="field"><label>Follow-up date</label><input id="f_followup" type="date"></div>
+    </div>
+
+    <div class="field-row">
+      <div class="field"><label>Deal value (NZD)</label><input id="f_value" type="number" inputmode="decimal" placeholder="0"></div>
+      <div class="field"><label>Paid?</label>
+        <select id="f_paid"><option value="">—</option><option>No</option><option>Partial</option><option>Yes</option></select>
+      </div>
+    </div>
+
+    <div class="field"><label>Deliverables</label><input id="f_deliverables" type="text" placeholder="e.g. 3 reels, 5 photos"></div>
+    <div class="field"><label>Notes</label><textarea id="f_notes" placeholder="Anything to remember…"></textarea></div>
+
+    <div class="sheet-actions">
+      <button class="btn btn-danger" id="deleteBtn" style="display:none">Delete</button>
+      <button class="btn btn-ghost" id="cancelBtn">Cancel</button>
+      <button class="btn btn-primary" id="saveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Menu sheet -->
+<div class="overlay" id="menuOverlay">
+  <div class="menu">
+    <div class="grab"></div>
+    <div class="menu-item" id="mImport"><span class="em">📥</span><div><div>Import from CSV / Excel</div><div class="desc">Paste or upload her spreadsheet</div></div></div>
+    <div class="menu-item" id="mExport"><span class="em">📤</span><div><div>Export to CSV</div><div class="desc">Download a backup / open in Excel</div></div></div>
+    <div class="menu-item" id="mRename"><span class="em">✏️</span><div><div>Rename CRM</div><div class="desc">Set her name on the header</div></div></div>
+    <div class="menu-item" id="mReset"><span class="em">🗑️</span><div><div>Clear all data</div><div class="desc">Wipe everything and start fresh</div></div></div>
+  </div>
+</div>
+
+<!-- Import sheet -->
+<div class="overlay" id="importOverlay">
+  <div class="sheet">
+    <div class="grab"></div>
+    <h3>Import brands</h3>
+    <div class="sub">Two ways — upload her Excel file (saved as CSV), or copy the cells and paste below.</div>
+    <div class="field">
+      <label>Upload a CSV file</label>
+      <input id="csvFile" type="file" accept=".csv,text/csv">
+    </div>
+    <div class="field">
+      <label>…or paste rows here</label>
+      <textarea id="csvPaste" style="min-height:130px" placeholder="Paste straight from Excel/Sheets. First row should be the column headers (Brand Name, Status, Niche, Email…)."></textarea>
+    </div>
+    <div class="hint">Recognised columns (any order): <code>Brand Name</code>, <code>Website</code>, <code>Contact Person</code>, <code>Email</code>, <code>Address</code>, <code>Date Contacted</code>, <code>Follow Up Date</code>, <code>Status</code>, <code>Deal Value</code>, <code>Deliverables</code>, <code>Paid</code>, <code>Niche</code>, <code>Notes</code>. Brands are matched by name, so re-importing updates instead of duplicating.</div>
+    <div class="sheet-actions">
+      <button class="btn btn-ghost" id="importCancel">Cancel</button>
+      <button class="btn btn-primary" id="importGo">Import</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const LS='ugc_crm_v1', LS_META='ugc_crm_meta_v1';
+const STATUSES=[
+  {id:'tocontact', label:'To contact', cls:'s-tocontact'},
+  {id:'contacted', label:'Contacted', cls:'s-contacted'},
+  {id:'awaiting', label:'Awaiting reply', cls:'s-awaiting'},
+  {id:'negotiating', label:'Negotiating', cls:'s-negotiating'},
+  {id:'closed', label:'Deal closed', cls:'s-closed'},
+  {id:'declined', label:'Declined', cls:'s-declined'},
+];
+const NICHES=['Food','Wellness & Beauty','Clothes / Other','Athleisure'];
+
+// Seed = her actual brand list from the spreadsheet
+const SEED_BRANDS={
+  'Food':['Retros','Good Puddings','Oxypop','Fix and Fogg','Proper Crisps','Kaikoura Candy','Kakako Coffee','Little Bird Organics','Charlies Candy','Clean Nutrition NZ','Drink Inner Bloom','Gia Dates','Moccona NZ','Whitakers','Cadbury AU NZ','Ceres Organics'],
+  'Wellness & Beauty':['SUP Supplements','Ethique','Trilogy','QV','Antipodes','Snowberry NZ','Roope Wellness','Healthpost NZ','Chemist Warehouse','The Warehouse','MCoBeauty','Essano','Phixx Hair','LOccitane AU NZ','Ciroa Beauty','Scarsies Official','Shadey Co','Grin Natural','Clinique','Tymo','Palmers','GO Healthy','Thayers'],
+  'Clothes / Other':['JBL','The Goodnight Society','Glassons','Novo Shoes','Number One Shoes','Snatched Body Glue','Nova'],
+  'Athleisure':['The Ordinary','Kmart','iHerb','Adore Beauty','Peppermayo','Princess Polly','Ecoya Candles','Charles and Keith','Wind Down NZ','Lazy Bear Collective','Holiday BnB'],
+};
+
+let DATA=[], META={owner:''};
+let filterStatus='all', filterNiche='all', search='';
+let editingId=null;
+
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function load(){
+  try{ DATA=JSON.parse(localStorage.getItem(LS))||[]; }catch(e){ DATA=[]; }
+  try{ META=JSON.parse(localStorage.getItem(LS_META))||{owner:''}; }catch(e){ META={owner:''}; }
+  if(!localStorage.getItem(LS)){ seed(); }
+}
+function save(){ localStorage.setItem(LS,JSON.stringify(DATA)); localStorage.setItem(LS_META,JSON.stringify(META)); }
+function seed(){
+  DATA=[];
+  for(const niche in SEED_BRANDS){
+    SEED_BRANDS[niche].forEach(name=>{
+      DATA.push(blank(name,niche));
+    });
+  }
+  save();
+}
+function blank(name,niche){
+  return {id:uid(),name:name||'',website:'',contact:'',email:'',address:'',contacted:'',followup:'',status:'tocontact',value:'',deliverables:'',paid:'',niche:niche||'',notes:''};
+}
+
+// ---------- helpers ----------
+function todayStr(){ const d=new Date(); return d.toISOString().slice(0,10); }
+function money(n){ const v=parseFloat(n); if(!v||isNaN(v)) return null; return '$'+v.toLocaleString('en-NZ',{maximumFractionDigits:0}); }
+function statusObj(id){ return STATUSES.find(s=>s.id===id)||STATUSES[0]; }
+function dueState(d){
+  if(!d) return null;
+  const t=todayStr();
+  if(d<t) return 'overdue';
+  if(d===t) return 'due';
+  return null;
+}
+function fmtDate(d){ if(!d) return ''; const p=d.split('-'); return p.length===3? p[2]+'/'+p[1] : d; }
+
+// ---------- render ----------
+function render(){
+  renderStats(); renderChips(); renderList(); renderOwner();
+}
+function renderOwner(){
+  document.getElementById('ownerLine').textContent = META.owner ? (META.owner+"'s pipeline") : 'Brand outreach pipeline';
+}
+function renderStats(){
+  const total=DATA.length;
+  const contacted=DATA.filter(b=>b.status!=='tocontact').length;
+  const closed=DATA.filter(b=>b.status==='closed').length;
+  const awaiting=DATA.filter(b=>b.status==='awaiting').length;
+  const t=todayStr();
+  const due=DATA.filter(b=>b.followup && b.followup<=t && b.status!=='closed' && b.status!=='declined').length;
+  const revenue=DATA.filter(b=>b.status==='closed').reduce((s,b)=>s+(parseFloat(b.value)||0),0);
+  const cards=[
+    {lab:'Brands',val:total,spark:'🏷️'},
+    {lab:'Contacted',val:contacted,spark:'✉️'},
+    {lab:'Deals closed',val:closed,spark:'🤝'},
+    {lab:'Revenue',val:money(revenue)||'$0',cls:'rev',spark:'💰'},
+    {lab:'Awaiting',val:awaiting,cls:'wait',spark:'⏳'},
+    {lab:'Follow-ups due',val:due,cls:'due',spark:'🔔'},
+  ];
+  document.getElementById('stats').innerHTML=cards.map(c=>
+    `<div class="stat ${c.cls||''}"><div class="lab">${c.lab}</div><div class="val">${c.val}</div><div class="spark">${c.spark}</div></div>`
+  ).join('');
+}
+function renderChips(){
+  const counts={}; DATA.forEach(b=>{ const n=b.niche||'Other'; counts[n]=(counts[n]||0)+1; });
+  const order=['all',...NICHES.filter(n=>counts[n]),...Object.keys(counts).filter(n=>!NICHES.includes(n))];
+  document.getElementById('nicheChips').innerHTML=order.map(n=>{
+    const on=filterNiche===n?'on':'';
+    const lab=n==='all'?'All':n;
+    const ct=n==='all'?DATA.length:(counts[n]||0);
+    return `<button class="chip ${on}" data-niche="${n}">${lab}<span class="ct">${ct}</span></button>`;
+  }).join('');
+}
+function matches(b){
+  if(filterNiche!=='all' && (b.niche||'Other')!==filterNiche) return false;
+  if(filterStatus!=='all' && b.status!==filterStatus) return false;
+  if(search){
+    const q=search.toLowerCase();
+    const hay=[b.name,b.contact,b.email,b.niche,b.notes,b.deliverables].join(' ').toLowerCase();
+    if(!hay.includes(q)) return false;
+  }
+  return true;
+}
+function renderList(){
+  const visible=DATA.filter(matches);
+  const el=document.getElementById('list');
+  if(!visible.length){
+    el.innerHTML=`<div class="empty"><div class="big">🌸</div><div>No brands here yet.<br>Tap <b>+ Brand</b> to add one.</div></div>`;
+    return;
+  }
+  // group by status, in pipeline order
+  const order={};
+  STATUSES.forEach((s,i)=>order[s.id]=i);
+  const byStatus={};
+  visible.forEach(b=>{ (byStatus[b.status]=byStatus[b.status]||[]).push(b); });
+  let html='';
+  STATUSES.forEach(s=>{
+    const items=byStatus[s.id]; if(!items||!items.length) return;
+    items.sort((a,b)=>(a.followup||'9999').localeCompare(b.followup||'9999')||a.name.localeCompare(b.name));
+    html+=`<div class="section-head"><h2>${s.label}</h2><span class="ct">${items.length}</span><span class="line"></span></div>`;
+    html+=items.map(card).join('');
+  });
+  el.innerHTML=html;
+}
+function card(b){
+  const s=statusObj(b.status);
+  const m=money(b.value);
+  const du=dueState(b.followup);
+  let tags='';
+  if(b.niche) tags+=`<span class="tag">${b.niche}</span>`;
+  if(m) tags+=`<span class="tag money">${m}</span>`;
+  if(b.paid==='Yes') tags+=`<span class="tag paid">Paid ✓</span>`;
+  else if(b.paid==='Partial') tags+=`<span class="tag unpaid">Part-paid</span>`;
+  else if(b.paid==='No' && b.status==='closed') tags+=`<span class="tag unpaid">Unpaid</span>`;
+  if(b.followup && b.status!=='closed' && b.status!=='declined'){
+    if(du==='overdue') tags+=`<span class="tag overdue">⚠ Follow up ${fmtDate(b.followup)}</span>`;
+    else if(du==='due') tags+=`<span class="tag due">🔔 Follow up today</span>`;
+    else tags+=`<span class="tag">↻ ${fmtDate(b.followup)}</span>`;
+  }
+  let meta=[];
+  if(b.contact) meta.push(b.contact);
+  if(b.email) meta.push(`<a href="mailto:${b.email}" onclick="event.stopPropagation()">${b.email}</a>`);
+  if(b.website){ const u=b.website.startsWith('http')?b.website:'https://'+b.website; meta.push(`<a href="${u}" target="_blank" onclick="event.stopPropagation()">${b.website.replace(/^https?:\/\//,'')}</a>`); }
+  return `<div class="card" data-id="${b.id}">
+    <div class="row1">
+      <div><div class="bname">${esc(b.name||'Untitled')}</div>${meta.length?`<div class="meta">${meta.join('<span style="opacity:.4">·</span>')}</div>`:''}</div>
+      <span class="badge ${s.cls}">${s.label}</span>
+    </div>
+    ${tags?`<div class="row2">${tags}</div>`:''}
+  </div>`;
+}
+function esc(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+// ---------- edit ----------
+function openEdit(id){
+  editingId=id;
+  const b=id?DATA.find(x=>x.id===id):blank('', filterNiche!=='all'?filterNiche:'');
+  document.getElementById('editTitle').textContent=id?'Edit brand':'New brand';
+  document.getElementById('editSub').textContent=id?(b.name||''):'Add a brand to the pipeline';
+  document.getElementById('deleteBtn').style.display=id?'block':'none';
+  f('name',b.name); f('website',b.website); f('contact',b.contact); f('email',b.email);
+  f('address',b.address); f('contacted',b.contacted); f('followup',b.followup);
+  f('value',b.value); f('paid',b.paid); f('deliverables',b.deliverables); f('notes',b.notes);
+  buildPills('f_status', STATUSES.map(s=>({v:s.id,l:s.label})), b.status||'tocontact');
+  buildPills('f_niche', NICHES.map(n=>({v:n,l:n})), b.niche||'', true);
+  document.getElementById('editOverlay').classList.add('on');
+}
+function f(k,v){ document.getElementById('f_'+k).value=v||''; }
+function buildPills(containerId, opts, selected, allowEmpty){
+  const c=document.getElementById(containerId);
+  c.dataset.val=selected||'';
+  c.innerHTML=opts.map(o=>`<button type="button" data-v="${o.v}" class="${o.v===selected?'on':''}">${o.l}</button>`).join('');
+  c.querySelectorAll('button').forEach(btn=>btn.onclick=()=>{
+    if(allowEmpty && c.dataset.val===btn.dataset.v){ c.dataset.val=''; }
+    else c.dataset.val=btn.dataset.v;
+    c.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.v===c.dataset.val));
+  });
+}
+function closeEdit(){ document.getElementById('editOverlay').classList.remove('on'); editingId=null; }
+function saveEdit(){
+  const name=document.getElementById('f_name').value.trim();
+  if(!name){ toast('Add a brand name first'); return; }
+  let b=editingId?DATA.find(x=>x.id===editingId):null;
+  if(!b){ b=blank(); DATA.push(b); }
+  b.name=name;
+  b.website=document.getElementById('f_website').value.trim();
+  b.contact=document.getElementById('f_contact').value.trim();
+  b.email=document.getElementById('f_email').value.trim();
+  b.address=document.getElementById('f_address').value.trim();
+  b.contacted=document.getElementById('f_contacted').value;
+  b.followup=document.getElementById('f_followup').value;
+  b.value=document.getElementById('f_value').value;
+  b.paid=document.getElementById('f_paid').value;
+  b.deliverables=document.getElementById('f_deliverables').value.trim();
+  b.notes=document.getElementById('f_notes').value.trim();
+  b.status=document.getElementById('f_status').dataset.val||'tocontact';
+  b.niche=document.getElementById('f_niche').dataset.val||'';
+  // auto-set contacted date when moving off "to contact"
+  if(b.status!=='tocontact' && !b.contacted) b.contacted=todayStr();
+  save(); render(); closeEdit(); toast('Saved');
+}
+function deleteEdit(){
+  if(!editingId) return;
+  if(!confirm('Delete this brand?')) return;
+  DATA=DATA.filter(x=>x.id!==editingId);
+  save(); render(); closeEdit(); toast('Deleted');
+}
+
+// ---------- CSV ----------
+function parseCSV(text){
+  text=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  const rows=[]; let row=[], cur='', q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){
+      if(c==='"'){ if(text[i+1]==='"'){ cur+='"'; i++; } else q=false; }
+      else cur+=c;
+    } else {
+      if(c==='"') q=true;
+      else if(c===',' || c==='\t'){ row.push(cur); cur=''; }
+      else if(c==='\n'){ row.push(cur); rows.push(row); row=[]; cur=''; }
+      else cur+=c;
+    }
+  }
+  if(cur!=='' || row.length){ row.push(cur); rows.push(row); }
+  return rows.filter(r=>r.some(c=>c.trim()!==''));
+}
+const COLMAP=[
+  {keys:['brand','name'],f:'name'},
+  {keys:['website','url','site'],f:'website'},
+  {keys:['contact'],f:'contact'},
+  {keys:['email','e-mail'],f:'email'},
+  {keys:['address'],f:'address'},
+  {keys:['date contacted','contacted','date'],f:'contacted'},
+  {keys:['follow up','followup','follow-up'],f:'followup'},
+  {keys:['status'],f:'status'},
+  {keys:['deal value','value','nzd','amount','deal'],f:'value'},
+  {keys:['deliverable'],f:'deliverables'},
+  {keys:['paid'],f:'paid'},
+  {keys:['niche','category'],f:'niche'},
+  {keys:['note'],f:'notes'},
+];
+function mapHeader(h){
+  const l=h.toLowerCase().trim();
+  for(const c of COLMAP){ if(c.keys.some(k=>l.includes(k))) return c.f; }
+  return null;
+}
+function normStatus(v){
+  if(!v) return 'tocontact';
+  const l=v.toLowerCase();
+  if(l.includes('await')) return 'awaiting';
+  if(l.includes('negoti')||l.includes('talk')) return 'negotiating';
+  if(l.includes('clos')||l.includes('won')||l.includes('deal')||l.includes('paid')||l.includes('done')) return 'closed';
+  if(l.includes('declin')||l.includes('no ')||l.includes('reject')||l.includes('pass')) return 'declined';
+  if(l.includes('contact')||l.includes('sent')||l.includes('reach')||l.includes('dm')) return 'contacted';
+  return 'tocontact';
+}
+function normDate(v){
+  if(!v) return '';
+  v=v.trim();
+  if(/^\d{4}-\d{2}-\d{2}/.test(v)) return v.slice(0,10);
+  // dd/mm/yyyy or dd/mm/yy
+  let m=v.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);
+  if(m){ let[_,d,mo,y]=m; if(y.length===2)y='20'+y; return `${y}-${mo.padStart(2,'0')}-${d.padStart(2,'0')}`; }
+  return '';
+}
+function normNiche(v){
+  if(!v) return '';
+  const l=v.toLowerCase();
+  if(l.includes('food')||l.includes('drink')||l.includes('snack')) return 'Food';
+  if(l.includes('well')||l.includes('beaut')||l.includes('skin')||l.includes('supp')) return 'Wellness & Beauty';
+  if(l.includes('athl')||l.includes('active')||l.includes('gym')||l.includes('sport')) return 'Athleisure';
+  if(l.includes('cloth')||l.includes('fashion')||l.includes('shoe')||l.includes('other')) return 'Clothes / Other';
+  return v.trim();
+}
+function importCSV(text){
+  const rows=parseCSV(text);
+  if(rows.length<1){ toast('Nothing to import'); return; }
+  const header=rows[0].map(mapHeader);
+  const hasHeader=header.some(h=>h==='name');
+  let start=0, cols=header;
+  if(!hasHeader){
+    // assume first column is brand name only
+    cols=['name']; start=0;
+  } else start=1;
+  let added=0, updated=0;
+  for(let r=start;r<rows.length;r++){
+    const cells=rows[r];
+    const obj={};
+    cells.forEach((val,i)=>{ const fld=hasHeader?header[i]:(i===0?'name':null); if(fld) obj[fld]=(val||'').trim(); });
+    if(!obj.name) continue;
+    let b=DATA.find(x=>x.name.toLowerCase()===obj.name.toLowerCase());
+    if(b){ updated++; } else { b=blank(); DATA.push(b); added++; }
+    if(obj.name) b.name=obj.name;
+    if(obj.website!=null && obj.website!=='') b.website=obj.website;
+    if(obj.contact!=null && obj.contact!=='') b.contact=obj.contact;
+    if(obj.email!=null && obj.email!=='') b.email=obj.email;
+    if(obj.address!=null && obj.address!=='') b.address=obj.address;
+    if(obj.contacted) b.contacted=normDate(obj.contacted);
+    if(obj.followup) b.followup=normDate(obj.followup);
+    if(obj.status) b.status=normStatus(obj.status);
+    if(obj.value!=null && obj.value!=='') b.value=String(obj.value).replace(/[^0-9.]/g,'');
+    if(obj.deliverables!=null && obj.deliverables!=='') b.deliverables=obj.deliverables;
+    if(obj.paid){ const p=obj.paid.toLowerCase(); b.paid=p.includes('y')||p.includes('✓')?'Yes':p.includes('part')?'Partial':p.includes('n')?'No':b.paid; }
+    if(obj.niche) b.niche=normNiche(obj.niche);
+    if(obj.notes!=null && obj.notes!=='') b.notes=obj.notes;
+  }
+  save(); render();
+  document.getElementById('importOverlay').classList.remove('on');
+  toast(`Imported — ${added} added, ${updated} updated`);
+}
+function exportCSV(){
+  const head=['Brand Name','Website','Contact Person','Email','Address','Date Contacted','Follow Up Date','Status','Deal Value NZD','Deliverables','Paid','Niche','Notes'];
+  const lines=[head.join(',')];
+  DATA.forEach(b=>{
+    const row=[b.name,b.website,b.contact,b.email,b.address,b.contacted,b.followup,statusObj(b.status).label,b.value,b.deliverables,b.paid,b.niche,b.notes];
+    lines.push(row.map(v=>{ v=(v==null?'':String(v)); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }).join(','));
+  });
+  const blob=new Blob([lines.join('\n')],{type:'text/csv'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='ugc-crm-'+todayStr()+'.csv';
+  a.click();
+  toast('Exported CSV');
+}
+
+// ---------- toast ----------
+let toastT;
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('on');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'),1900);
+}
+
+// ---------- status filter via menu ----------
+function cycleStatusFilter(){
+  const opts=['all',...STATUSES.map(s=>s.id)];
+  const i=opts.indexOf(filterStatus);
+  filterStatus=opts[(i+1)%opts.length];
+  const lab=filterStatus==='all'?'All statuses':statusObj(filterStatus).label;
+  toast('Showing: '+lab);
+  render();
+}
+
+// ---------- events ----------
+function bind(){
+  document.getElementById('addBtn').onclick=()=>openEdit(null);
+  document.getElementById('saveBtn').onclick=saveEdit;
+  document.getElementById('cancelBtn').onclick=closeEdit;
+  document.getElementById('deleteBtn').onclick=deleteEdit;
+  document.getElementById('editOverlay').onclick=e=>{ if(e.target.id==='editOverlay') closeEdit(); };
+  document.getElementById('filterBtn').onclick=cycleStatusFilter;
+
+  document.getElementById('list').onclick=e=>{ const c=e.target.closest('.card'); if(c) openEdit(c.dataset.id); };
+  document.getElementById('nicheChips').onclick=e=>{ const c=e.target.closest('.chip'); if(c){ filterNiche=c.dataset.niche; render(); } };
+  document.getElementById('searchInput').oninput=e=>{ search=e.target.value; renderList(); };
+
+  // menu
+  const menuOv=document.getElementById('menuOverlay');
+  document.getElementById('menuBtn').onclick=()=>menuOv.classList.add('on');
+  menuOv.onclick=e=>{ if(e.target.id==='menuOverlay') menuOv.classList.remove('on'); };
+  document.getElementById('mExport').onclick=()=>{ menuOv.classList.remove('on'); exportCSV(); };
+  document.getElementById('mImport').onclick=()=>{ menuOv.classList.remove('on'); document.getElementById('importOverlay').classList.add('on'); };
+  document.getElementById('mRename').onclick=()=>{ menuOv.classList.remove('on'); const n=prompt('Whose pipeline is this?',META.owner||''); if(n!==null){ META.owner=n.trim(); save(); render(); } };
+  document.getElementById('mReset').onclick=()=>{ menuOv.classList.remove('on'); if(confirm('Clear ALL brands and reload her starter list? This cannot be undone.')){ localStorage.removeItem(LS); seed(); render(); toast('Reset to starter list'); } };
+
+  // import
+  const impOv=document.getElementById('importOverlay');
+  impOv.onclick=e=>{ if(e.target.id==='importOverlay') impOv.classList.remove('on'); };
+  document.getElementById('importCancel').onclick=()=>impOv.classList.remove('on');
+  document.getElementById('importGo').onclick=()=>{
+    const txt=document.getElementById('csvPaste').value.trim();
+    if(txt){ importCSV(txt); document.getElementById('csvPaste').value=''; }
+    else toast('Paste some rows or pick a file');
+  };
+  document.getElementById('csvFile').onchange=e=>{
+    const file=e.target.files[0]; if(!file) return;
+    const rd=new FileReader();
+    rd.onload=()=>{ importCSV(rd.result); e.target.value=''; };
+    rd.readAsText(file);
+  };
+}
+
+load(); bind(); render();
+</script>
+</body>
+</html>
